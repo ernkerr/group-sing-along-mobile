@@ -14,6 +14,7 @@ interface UsePusherCallbacks {
   onNewUserJoined?: () => void
   onSubscriptionCount?: (count: number) => void
   onSubscriptionSucceeded?: () => void
+  onHostDisconnect?: () => void
 }
 
 /**
@@ -65,6 +66,11 @@ export const usePusher = (
       )
     }
 
+    // Bind to host disconnect event
+    if (callbacks.onHostDisconnect) {
+      channelRef.current.bind('host-disconnect', callbacks.onHostDisconnect)
+    }
+
     // Cleanup function
     return () => {
       if (channelRef.current) {
@@ -74,7 +80,12 @@ export const usePusher = (
         console.log('Unsubscribed from Pusher channel:', channelName)
       }
     }
-  }, [groupId, callbacks.onLyricUpdate, callbacks.onNewUserJoined])
+  }, [
+    groupId,
+    callbacks.onLyricUpdate,
+    callbacks.onNewUserJoined,
+    callbacks.onHostDisconnect,
+  ])
 
   return channelRef.current
 }

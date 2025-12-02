@@ -14,6 +14,8 @@ interface InputProps {
   maxLength?: number
   className?: string
   label?: string
+  returnKeyType?: 'done' | 'go' | 'next' | 'search' | 'send'
+  onSubmitEditing?: () => void
 }
 
 export function Input({
@@ -27,7 +29,9 @@ export function Input({
   editable = true,
   maxLength,
   className,
-  label
+  label,
+  returnKeyType,
+  onSubmitEditing
 }: InputProps) {
   return (
     <View className="w-full">
@@ -52,6 +56,8 @@ export function Input({
         secureTextEntry={secureTextEntry}
         editable={editable}
         maxLength={maxLength}
+        returnKeyType={returnKeyType}
+        onSubmitEditing={onSubmitEditing}
       />
     </View>
   )

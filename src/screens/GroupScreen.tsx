@@ -102,15 +102,69 @@ export default function GroupScreen() {
     }
   }, [isHost, groupId])
 
+  // Handle host disconnect - notify all members
+  const handleHostDisconnect = useCallback(async () => {
+    if (!isHost) return
+
+    try {
+      console.log('Host is disconnecting')
+      await api.triggerPusherEvent(`group-lyrics-${groupId}`, 'host-disconnect', {
+        message: 'Host has ended the session',
+      })
+    } catch (error) {
+      console.error('Error sending host disconnect message:', error)
+    }
+  }, [isHost, groupId])
+
+  // Handle receiving host disconnect event (for non-hosts)
+  const handleHostDisconnectReceived = useCallback(() => {
+    Alert.alert(
+      'Session Ended',
+      'The host has ended the session',
+      [
+        {
+          text: 'OK',
+          onPress: async () => {
+            await storage.clearAll()
+            navigation.goBack()
+          },
+        },
+      ],
+      { cancelable: false }
+    )
+  }, [navigation])
+
   // Initialize Pusher connection
   usePusher(groupId, {
     onLyricUpdate: handleLyricUpdate,
     onNewUserJoined: handleNewUserJoined,
     onSubscriptionCount: setMemberCount,
     onSubscriptionSucceeded: handleSubscriptionSucceeded,
+    onHostDisconnect: handleHostDisconnectReceived,
   })
 
+  // Handle app state changes for host disconnect
+  useEffect(() => {
+    if (!isHost) return
+
+    const subscription = AppState.addEventListener('change', (nextAppState: AppStateStatus) => {
+      // If host is backgrounding or quitting the app
+      if (nextAppState === 'background' || nextAppState === 'inactive') {
+        handleHostDisconnect()
+      }
+    })
+
+    // Cleanup on unmount - notify users that host is leaving
+    return () => {
+      subscription.remove()
+      handleHostDisconnect()
+    }
+  }, [isHost, handleHostDisconnect])
+
   const handleLeaveGroup = async () => {
+    if (isHost) {
+      await handleHostDisconnect()
+    }
     await storage.clearAll()
     navigation.goBack()
   }

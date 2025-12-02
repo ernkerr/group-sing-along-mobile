@@ -9,12 +9,20 @@ interface LyricUpdateData {
   albumCover?: string
 }
 
+interface SongRequestData {
+  title: string
+  artist: string
+  albumCover: string
+  timestamp: number
+}
+
 interface UsePusherCallbacks {
   onLyricUpdate?: (data: LyricUpdateData) => void
   onNewUserJoined?: () => void
   onSubscriptionCount?: (count: number) => void
   onSubscriptionSucceeded?: () => void
   onHostDisconnect?: () => void
+  onSongRequest?: (data: SongRequestData) => void
 }
 
 /**
@@ -71,6 +79,11 @@ export const usePusher = (
       channelRef.current.bind('host-disconnect', callbacks.onHostDisconnect)
     }
 
+    // Bind to song request event
+    if (callbacks.onSongRequest) {
+      channelRef.current.bind('song-request', callbacks.onSongRequest)
+    }
+
     // Cleanup function
     return () => {
       if (channelRef.current) {
@@ -85,9 +98,10 @@ export const usePusher = (
     callbacks.onLyricUpdate,
     callbacks.onNewUserJoined,
     callbacks.onHostDisconnect,
+    callbacks.onSongRequest,
   ])
 
   return channelRef.current
 }
 
-export type { LyricUpdateData, UsePusherCallbacks }
+export type { LyricUpdateData, SongRequestData, UsePusherCallbacks }

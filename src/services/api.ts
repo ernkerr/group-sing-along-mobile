@@ -83,13 +83,14 @@ export const api = {
   },
 
   /**
-   * Fetch lyrics for a song
-   * Calls lyrics.ovh API directly (no backend proxy needed)
+   * Fetch lyrics for a song via backend proxy
+   * Calls: GET /api/lyrics?artist=...&title=...
+   * This fixes CORS issues and cleans song titles (removes "Remastered", "Live", etc.)
    */
   fetchLyrics: async (artist: string, title: string): Promise<string> => {
     try {
       const response = await fetch(
-        `https://api.lyrics.ovh/v1/${encodeURIComponent(artist)}/${encodeURIComponent(title)}`
+        `${API_BASE_URL}/api/lyrics?artist=${encodeURIComponent(artist)}&title=${encodeURIComponent(title)}`
       )
 
       if (!response.ok) {

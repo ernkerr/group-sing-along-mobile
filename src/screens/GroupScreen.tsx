@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useCallback } from 'react'
+import React, { useState, useEffect, useCallback, useRef } from 'react'
 import {
   View,
   ScrollView,
@@ -8,10 +8,12 @@ import {
   Alert,
   AppState,
   AppStateStatus,
+  Animated,
 } from 'react-native'
 import { SafeAreaView } from 'react-native-safe-area-context'
 import { useRoute, RouteProp, useNavigation } from '@react-navigation/native'
 import { LinearGradient } from 'expo-linear-gradient'
+import { Ionicons } from '@expo/vector-icons'
 import { RocaText, GaretText } from '@/components/ui/Typography'
 import { Input } from '@/components/ui/Input'
 import { ShareModal } from '@/components/ShareModal'
@@ -21,6 +23,26 @@ import { api } from '@/services/api'
 import type { RootStackParamList } from '@/types'
 
 type GroupScreenRouteProp = RouteProp<RootStackParamList, 'Group'>
+
+interface SearchResult {
+  display?: string
+  artist: {
+    name: string
+  }
+  title: string
+  album: {
+    cover?: string
+    cover_medium: string
+  }
+}
+
+interface SongRequest {
+  title: string
+  artist: string
+  albumCover: string
+  timestamp: number
+  requestCount: number
+}
 
 export default function GroupScreen() {
   const route = useRoute<GroupScreenRouteProp>()
@@ -39,16 +61,52 @@ export default function GroupScreen() {
 
   // Song search state (for hosts)
   const [searchTerm, setSearchTerm] = useState('')
-  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [searchResults, setSearchResults] = useState<SearchResult[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [isFetchingLyrics, setIsFetchingLyrics] = useState(false)
+
+  // Singer search state (for non-hosts)
+  const [singerSearchTerm, setSingerSearchTerm] = useState('')
+  const [singerSearchResults, setSingerSearchResults] = useState<SearchResult[]>([])
+  const [isSingerSearching, setIsSingerSearching] = useState(false)
+
+  // Song requests state (for hosts)
+  const [songRequests, setSongRequests] = useState<SongRequest[]>([])
+  const [isRequestDropdownOpen, setIsRequestDropdownOpen] = useState(false)
 
   // Share modal state
   const [isShareModalVisible, setIsShareModalVisible] = useState(false)
 
+  // Pulse animation for loading states
+  const pulseAnim = useRef(new Animated.Value(1)).current
+
   useEffect(() => {
     loadRole()
   }, [])
+
+  // Pulse animation effect when loading
+  useEffect(() => {
+    if (isSearching || isFetchingLyrics) {
+      const pulse = Animated.loop(
+        Animated.sequence([
+          Animated.timing(pulseAnim, {
+            toValue: 0.6,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+          Animated.timing(pulseAnim, {
+            toValue: 1,
+            duration: 800,
+            useNativeDriver: true,
+          }),
+        ])
+      )
+      pulse.start()
+      return () => pulse.stop()
+    } else {
+      pulseAnim.setValue(1)
+    }
+  }, [isSearching, isFetchingLyrics, pulseAnim])
 
   const loadRole = async () => {
     try {
@@ -172,7 +230,7 @@ export default function GroupScreen() {
   const increaseFontSize = () => setFontSize((prev) => Math.min(prev + 2, 32))
   const decreaseFontSize = () => setFontSize((prev) => Math.max(prev - 2, 10))
 
-  // Search for songs (Deezer)
+  // Search for songs (Deezer) - Host
   const handleSearch = async () => {
     if (!searchTerm.trim()) return
 
@@ -189,6 +247,55 @@ export default function GroupScreen() {
     } finally {
       setIsSearching(false)
     }
+  }
+
+  // Search for songs (Deezer) - Singer
+  const searchSongAsSinger = async () => {
+    if (!singerSearchTerm.trim()) return
+
+    setIsSingerSearching(true)
+    try {
+      console.log('Singer searching for:', singerSearchTerm)
+      const results = await api.searchSongs(singerSearchTerm)
+      console.log('Singer search results:', results)
+      setSingerSearchResults(results)
+    } catch (error) {
+      console.error('Error searching songs for singer:', error)
+      Alert.alert('Search Error', 'Failed to search songs. Please try again.')
+    } finally {
+      setIsSingerSearching(false)
+    }
+  }
+
+  // Request a song (Singer -> Host)
+  const requestSong = async (title: string, artist: string, albumCover: string) => {
+    try {
+      setSingerSearchResults([])
+      setSingerSearchTerm('')
+
+      await api.triggerPusherEvent(`group-lyrics-${groupId}`, 'song-request', {
+        title,
+        artist,
+        albumCover,
+        timestamp: Date.now(),
+      })
+
+      Alert.alert('Request Sent!', `"${title}" by ${artist} has been requested.`)
+    } catch (error) {
+      console.error('Error requesting song:', error)
+      Alert.alert('Request Failed', 'Failed to send song request. Please try again.')
+    }
+  }
+
+  // Accept a song request (Host)
+  const acceptSongRequest = async (request: SongRequest) => {
+    console.log('Host accepting song request:', request)
+    setIsRequestDropdownOpen(false)
+    await handleSelectSong({
+      title: request.title,
+      artist: { name: request.artist },
+      album: { cover_medium: request.albumCover },
+    } as any)
   }
 
   // Select a song and fetch/broadcast lyrics
@@ -242,7 +349,7 @@ export default function GroupScreen() {
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         <View className="mx-4 my-6">
           {/* Card with Gradient Header */}
-          <View className="bg-white rounded-lg shadow-lg overflow-hidden">
+          <View className="bg-white rounded-lg overflow-hidden shadow-xl">
             {/* Header with Gradient Background */}
             <LinearGradient
               colors={['#c084fc', '#d8b4fe']}
@@ -252,6 +359,7 @@ export default function GroupScreen() {
             >
               <View className="flex-row items-center justify-between">
                 <View className="flex-row items-center gap-2">
+                  <Ionicons name="mic" size={24} color="white" />
                   <RocaText className="text-xl text-white font-bold">
                     Group Sing Along
                   </RocaText>
@@ -260,6 +368,7 @@ export default function GroupScreen() {
                   onPress={() => setIsShareModalVisible(true)}
                   className="bg-violet-300 px-3 py-2 rounded-md flex-row items-center gap-2 shadow-lg active:bg-violet-400"
                 >
+                  <Ionicons name="people" size={16} color="white" />
                   <GaretText className="text-white text-sm font-semibold">
                     {memberCount} {memberCount === 1 ? 'member' : 'members'}
                   </GaretText>
@@ -294,21 +403,27 @@ export default function GroupScreen() {
                         className="shadow-md"
                       />
                     </View>
-                    <Pressable
-                      onPress={handleSearch}
-                      disabled={isSearching || !searchTerm.trim()}
-                      className={`px-4 py-3 rounded-md flex-row items-center gap-2 justify-center shadow-md ${
-                        isSearching || !searchTerm.trim()
-                          ? 'bg-gray-300'
-                          : 'bg-gradient-to-r from-violet-400 to-violet-300'
-                      }`}
+                    <LinearGradient
+                      colors={isSearching || !searchTerm.trim() ? ['#d1d5db', '#d1d5db'] : ['#c084fc', '#d8b4fe']}
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={{ borderRadius: 6 }}
                     >
-                      {isSearching ? (
-                        <ActivityIndicator size="small" color="white" />
-                      ) : (
-                        <GaretText className="text-white font-semibold">Search</GaretText>
-                      )}
-                    </Pressable>
+                      <Pressable
+                        onPress={handleSearch}
+                        disabled={isSearching || !searchTerm.trim()}
+                        className="px-4 py-3 flex-row items-center gap-2 justify-center"
+                      >
+                        {isSearching ? (
+                          <ActivityIndicator size="small" color="white" />
+                        ) : (
+                          <>
+                            <Ionicons name="search" size={16} color="white" />
+                            <GaretText className="text-white font-semibold">Search</GaretText>
+                          </>
+                        )}
+                      </Pressable>
+                    </LinearGradient>
                   </View>
 
                   {/* Search Results */}
@@ -318,9 +433,10 @@ export default function GroupScreen() {
                         <Pressable
                           key={index}
                           onPress={() => handleSelectSong(result)}
-                          className="p-4 rounded-md hover:bg-violet-100 active:bg-violet-200 mb-1"
+                          className="p-4 rounded-md mb-1"
                           style={({ pressed }) => ({
-                            backgroundColor: pressed ? '#ddd6fe' : 'transparent',
+                            backgroundColor: pressed ? '#c4b5fd' : 'transparent',
+                            transition: 'background-color 0.2s',
                           })}
                         >
                           <GaretText className="text-base text-gray-900">
@@ -362,23 +478,26 @@ export default function GroupScreen() {
                 <View className="flex-row gap-2">
                   <Pressable
                     onPress={decreaseFontSize}
-                    className="w-8 h-8 border border-gray-300 rounded items-center justify-center"
+                    className="w-8 h-8 border border-gray-300 rounded items-center justify-center active:bg-gray-100"
                   >
-                    <GaretText className="text-base text-gray-700">-</GaretText>
+                    <Ionicons name="remove" size={16} color="#374151" />
                   </Pressable>
                   <Pressable
                     onPress={increaseFontSize}
-                    className="w-8 h-8 border border-gray-300 rounded items-center justify-center"
+                    className="w-8 h-8 border border-gray-300 rounded items-center justify-center active:bg-gray-100"
                   >
-                    <GaretText className="text-base text-gray-700">+</GaretText>
+                    <Ionicons name="add" size={16} color="#374151" />
                   </Pressable>
                 </View>
               </View>
 
               {/* Lyrics Display */}
-              <View
-                className="rounded-lg min-h-[400px] p-4 bg-gray-50"
-                style={{ minHeight: 400 }}
+              <Animated.View
+                className="rounded-lg p-4 bg-gray-50"
+                style={{
+                  minHeight: 600,
+                  opacity: isSearching || isFetchingLyrics ? pulseAnim : 1,
+                }}
               >
                 {isSearching ? (
                   <View className="flex-1 items-center justify-center">
@@ -396,13 +515,16 @@ export default function GroupScreen() {
                   </View>
                 ) : (
                   <GaretText
-                    style={{ fontSize, lineHeight: fontSize * 1.8 }}
+                    style={{
+                      fontSize,
+                      lineHeight: fontSize * 1.8,
+                    }}
                     className="text-gray-900"
                   >
                     {lyrics || 'Waiting for the Host to select a song...'}
                   </GaretText>
                 )}
-              </View>
+              </Animated.View>
             </View>
           </View>
 
@@ -411,6 +533,7 @@ export default function GroupScreen() {
             onPress={() => setIsShareModalVisible(true)}
             className="mt-6 bg-violet-300 px-4 py-3 rounded-md flex-row items-center justify-center gap-2 shadow-lg active:bg-violet-400"
           >
+            <Ionicons name="share-social" size={16} color="white" />
             <GaretText className="text-white font-semibold">Share</GaretText>
           </Pressable>
 

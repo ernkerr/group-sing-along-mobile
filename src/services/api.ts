@@ -59,6 +59,7 @@ export const api = {
   /**
    * Search for songs via Deezer API through Next.js proxy
    * Calls: GET /api/proxy?query=...
+   * Returns array of tracks directly (not wrapped in data property)
    */
   searchSongs: async (query: string): Promise<DeezerTrack[]> => {
     try {
@@ -70,8 +71,11 @@ export const api = {
         throw new Error(`API error: ${response.status}`)
       }
 
-      const data = await response.json()
-      return data.data || []
+      const result = await response.json()
+      console.log('Raw API response:', result)
+
+      // Backend returns the array directly, not wrapped
+      return Array.isArray(result) ? result : []
     } catch (error) {
       console.error('Error searching songs:', error)
       throw error

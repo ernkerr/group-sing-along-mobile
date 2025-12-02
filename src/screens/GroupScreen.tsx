@@ -5,6 +5,7 @@ import { useRoute, RouteProp, useNavigation } from '@react-navigation/native'
 import { RocaText, GaretText } from '@/components/ui/Typography'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
+import { Input } from '@/components/ui/Input'
 import { storage } from '@/services/storage'
 import { usePusher } from '@/hooks/usePusher'
 import { api } from '@/services/api'
@@ -26,6 +27,12 @@ export default function GroupScreen() {
   const [albumCover, setAlbumCover] = useState('')
   const [memberCount, setMemberCount] = useState(0)
   const [fontSize, setFontSize] = useState(16)
+
+  // Song search state (for hosts)
+  const [searchTerm, setSearchTerm] = useState('')
+  const [searchResults, setSearchResults] = useState<any[]>([])
+  const [isSearching, setIsSearching] = useState(false)
+  const [isFetchingLyrics, setIsFetchingLyrics] = useState(false)
 
   useEffect(() => {
     loadRole()
@@ -99,6 +106,58 @@ export default function GroupScreen() {
   const increaseFontSize = () => setFontSize((prev) => Math.min(prev + 2, 32))
   const decreaseFontSize = () => setFontSize((prev) => Math.max(prev - 2, 12))
 
+  // Search for songs (Deezer)
+  const handleSearch = async () => {
+    if (!searchTerm.trim()) return
+
+    setIsSearching(true)
+    try {
+      console.log('Searching for:', searchTerm)
+      const results = await api.searchSongs(searchTerm)
+      console.log('Search results:', results)
+      console.log('Number of results:', results.length)
+      setSearchResults(results)
+    } catch (error) {
+      console.error('Error searching songs:', error)
+      // Show error to user
+      alert(`Search failed: ${error}`)
+    } finally {
+      setIsSearching(false)
+    }
+  }
+
+  // Select a song and fetch/broadcast lyrics
+  const handleSelectSong = async (song: any) => {
+    setIsFetchingLyrics(true)
+    try {
+      // Fetch lyrics
+      const fetchedLyrics = await api.fetchLyrics(song.artist.name, song.title)
+
+      // Update local state
+      setLyrics(fetchedLyrics)
+      setCurrentSong(song.title)
+      setCurrentArtist(song.artist.name)
+      setAlbumCover(song.album.cover_medium)
+
+      // Broadcast to all users via Pusher
+      await api.triggerPusherEvent(`group-lyrics-${groupId}`, 'lyric-update', {
+        lyrics: fetchedLyrics,
+        title: song.title,
+        artist: song.artist.name,
+        albumCover: song.album.cover_medium,
+      })
+
+      // Clear search results
+      setSearchResults([])
+      setSearchTerm('')
+    } catch (error) {
+      console.error('Error selecting song:', error)
+      // TODO: Show error message to user
+    } finally {
+      setIsFetchingLyrics(false)
+    }
+  }
+
   if (loading) {
     return (
       <SafeAreaView className="flex-1 bg-white">
@@ -151,7 +210,7 @@ export default function GroupScreen() {
           </Card>
         )}
 
-        {/* Lyrics Display */}
+        {/* Lyrics Display / Song Search */}
         <Card className="flex-1 mb-4">
           {lyrics ? (
             <>
@@ -188,12 +247,78 @@ export default function GroupScreen() {
                 </GaretText>
               </ScrollView>
             </>
+          ) : isHost ? (
+            <View className="flex-1">
+              {/* Song Search for Host */}
+              <GaretText className="text-lg font-semibold text-gray-900 mb-4">
+                Search for a Song
+              </GaretText>
+
+              {/* Search Input */}
+              <View className="flex-row gap-2 mb-4">
+                <View className="flex-1">
+                  <Input
+                    placeholder="Search songs..."
+                    value={searchTerm}
+                    onChangeText={setSearchTerm}
+                    editable={!isSearching}
+                  />
+                </View>
+                <Button
+                  onPress={handleSearch}
+                  loading={isSearching}
+                  disabled={!searchTerm.trim()}
+                >
+                  Search
+                </Button>
+              </View>
+
+              {/* Search Results */}
+              <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+                {isFetchingLyrics ? (
+                  <View className="items-center justify-center py-8">
+                    <GaretText className="text-gray-600">Fetching lyrics...</GaretText>
+                  </View>
+                ) : searchResults.length > 0 ? (
+                  searchResults.map((song, index) => (
+                    <Button
+                      key={song.id || index}
+                      onPress={() => handleSelectSong(song)}
+                      variant="outline"
+                      className="mb-2 h-auto py-3 justify-start"
+                    >
+                      <View className="flex-row items-center gap-3 w-full">
+                        <View className="w-12 h-12 bg-gray-200 rounded" />
+                        <View className="flex-1">
+                          <GaretText className="text-sm font-semibold text-gray-900 text-left">
+                            {song.title}
+                          </GaretText>
+                          <GaretText className="text-xs text-gray-600 text-left">
+                            {song.artist.name}
+                          </GaretText>
+                        </View>
+                      </View>
+                    </Button>
+                  ))
+                ) : searchResults.length === 0 && searchTerm ? (
+                  <View className="items-center justify-center py-8">
+                    <GaretText className="text-gray-500 text-center">
+                      No results found for "{searchTerm}"
+                    </GaretText>
+                  </View>
+                ) : (
+                  <View className="items-center justify-center py-8">
+                    <GaretText className="text-gray-500 text-center">
+                      {isSearching ? 'Searching...' : 'Search for a song to get started'}
+                    </GaretText>
+                  </View>
+                )}
+              </ScrollView>
+            </View>
           ) : (
             <View className="flex-1 items-center justify-center">
               <GaretText className="text-gray-500 text-center">
-                {isHost
-                  ? 'Song search will appear here'
-                  : 'Waiting for the host to select a song...'}
+                Waiting for the host to select a song...
               </GaretText>
             </View>
           )}

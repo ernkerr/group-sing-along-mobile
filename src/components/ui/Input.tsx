@@ -1,6 +1,7 @@
 import React from 'react'
-import { TextInput, View, Text } from 'react-native'
+import { TextInput, View, Text, Platform } from 'react-native'
 import { cn } from '@/utils/cn'
+import { useTheme } from '@/context/ThemeContext'
 
 interface InputProps {
   placeholder?: string
@@ -21,6 +22,19 @@ interface InputProps {
   type?: string // For web compatibility
 }
 
+// Enhanced shadow styles for lg shadow effect
+const shadowStyles = Platform.select({
+  ios: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 4 },
+    shadowOpacity: 0.1,
+    shadowRadius: 6,
+  },
+  android: {
+    elevation: 4,
+  },
+})
+
 export function Input({
   placeholder,
   value,
@@ -39,6 +53,8 @@ export function Input({
   onKeyDown,
   type,
 }: InputProps) {
+  const { colors, colorScheme } = useTheme()
+
   const handleChangeText = (text: string) => {
     if (onChangeText) {
       onChangeText(text)
@@ -53,16 +69,31 @@ export function Input({
 
   return (
     <View className="w-full">
-      {label && <Text className="text-sm font-medium text-gray-700 mb-2">{label}</Text>}
+      {label && (
+        <Text
+          className="text-sm font-medium mb-2"
+          style={{ color: colors.foreground }}
+        >
+          {label}
+        </Text>
+      )}
       <TextInput
         className={cn(
-          'h-9 w-full rounded-md border border-gray-300 bg-transparent px-3 py-1 text-base shadow-sm transition-colors',
+          'h-11 w-full rounded-md border px-3 py-2 text-base transition-colors',
           'placeholder:text-gray-400',
           !editable && 'opacity-50',
           className
         )}
+        style={[
+          {
+            backgroundColor: colors.input,
+            borderColor: colors.border,
+            color: colors.foreground,
+          },
+          shadowStyles,
+        ]}
         placeholder={placeholder}
-        placeholderTextColor="#9ca3af"
+        placeholderTextColor={colorScheme === 'dark' ? '#9ca3af' : '#6b7280'}
         value={value}
         onChangeText={handleChangeText}
         autoCapitalize={autoCapitalize}

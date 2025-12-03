@@ -26,3 +26,23 @@ export function GaretText({ className, style, ...props }: TextProps) {
     />
   )
 }
+
+export function InterText({ className, style, ...props }: TextProps) {
+  return (
+    <RNText
+      {...props}
+      className={cn(className)}
+      style={[{ fontFamily: 'Inter' }, style]}
+    />
+  )
+}
+
+export function BricolageText({ className, style, ...props }: TextProps) {
+  return (
+    <RNText
+      {...props}
+      className={cn(className)}
+      style={[{ fontFamily: 'Bricolage' }, style]}
+    />
+  )
+}

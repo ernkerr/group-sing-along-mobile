@@ -120,15 +120,31 @@ export default function GroupScreen() {
   }
 
   // Pusher event handlers (based on web app)
-  const handleLyricUpdate = useCallback((data: any) => {
-    console.log('Received lyric update:', data)
-    setLyrics(data.lyrics)
-    setCurrentSong(data.title)
-    setCurrentArtist(data.artist)
-    if (data.albumCover) {
-      setAlbumCover(data.albumCover)
-    }
-  }, [])
+  const handleLyricUpdate = useCallback(
+    (data: any) => {
+      console.log('Received lyric update:', data)
+      setLyrics(data.lyrics)
+      setCurrentSong(data.title)
+      setCurrentArtist(data.artist)
+      if (data.albumCover) {
+        setAlbumCover(data.albumCover)
+      }
+
+      // Auto-remove matching song request (for hosts)
+      if (isHost) {
+        setSongRequests((prevRequests) =>
+          prevRequests.filter(
+            (req) =>
+              !(
+                req.title.toLowerCase() === data.title.toLowerCase() &&
+                req.artist.toLowerCase() === data.artist.toLowerCase()
+              )
+          )
+        )
+      }
+    },
+    [isHost]
+  )
 
   const handleNewUserJoined = useCallback(async () => {
     console.log('Host received new-user-joined event')
@@ -192,6 +208,46 @@ export default function GroupScreen() {
     )
   }, [navigation])
 
+  // Handle song request (for hosts)
+  const handleSongRequest = useCallback(
+    (data: { title: string; artist: string; albumCover: string; timestamp: number }) => {
+      if (!isHost) return
+
+      console.log('Received song request:', data)
+
+      setSongRequests((prevRequests) => {
+        const existingIndex = prevRequests.findIndex(
+          (req) =>
+            req.title.toLowerCase() === data.title.toLowerCase() &&
+            req.artist.toLowerCase() === data.artist.toLowerCase()
+        )
+
+        if (existingIndex !== -1) {
+          // Merge duplicate - increment request count
+          const updated = [...prevRequests]
+          updated[existingIndex] = {
+            ...updated[existingIndex],
+            requestCount: updated[existingIndex].requestCount + 1,
+          }
+          return updated
+        } else {
+          // New request
+          return [
+            ...prevRequests,
+            {
+              title: data.title,
+              artist: data.artist,
+              albumCover: data.albumCover,
+              timestamp: data.timestamp,
+              requestCount: 1,
+            },
+          ]
+        }
+      })
+    },
+    [isHost]
+  )
+
   // Initialize Pusher connection
   usePusher(groupId, {
     onLyricUpdate: handleLyricUpdate,
@@ -199,6 +255,7 @@ export default function GroupScreen() {
     onSubscriptionCount: setMemberCount,
     onSubscriptionSucceeded: handleSubscriptionSucceeded,
     onHostDisconnect: handleHostDisconnectReceived,
+    onSongRequest: handleSongRequest,
   })
 
   // Handle app state changes for host disconnect
@@ -315,9 +372,9 @@ export default function GroupScreen() {
 
       // Broadcast to all users via Pusher
       await api.triggerPusherEvent(`group-lyrics-${groupId}`, 'lyric-update', {
-        lyrics: fetchedLyrics,
         title: song.title,
         artist: song.artist.name,
+        lyrics: fetchedLyrics,
         albumCover: song.album.cover_medium,
       })
 
@@ -388,9 +445,89 @@ export default function GroupScreen() {
                 </GaretText>
               </View>
 
+              {/* Singer Controls - Song Request */}
+              {!isHost && (
+                <View className="space-y-3">
+                  <GaretText className="text-sm font-semibold text-gray-700">
+                    Request a Song
+                  </GaretText>
+
+                  <View className="flex-row gap-2">
+                    <View className="flex-1">
+                      <Input
+                        placeholder="Search for a song to request"
+                        value={singerSearchTerm}
+                        onChangeText={setSingerSearchTerm}
+                        editable={!isSingerSearching}
+                        returnKeyType="search"
+                        onSubmitEditing={searchSongAsSinger}
+                        className="shadow-md"
+                      />
+                    </View>
+                    <LinearGradient
+                      colors={
+                        isSingerSearching || !singerSearchTerm.trim()
+                          ? ['#d1d5db', '#d1d5db']
+                          : ['#c084fc', '#d8b4fe']
+                      }
+                      start={{ x: 0, y: 0 }}
+                      end={{ x: 1, y: 0 }}
+                      style={{ borderRadius: 6 }}
+                    >
+                      <Pressable
+                        onPress={searchSongAsSinger}
+                        disabled={isSingerSearching || !singerSearchTerm.trim()}
+                        className="px-4 py-3 flex-row items-center gap-2 justify-center"
+                      >
+                        {isSingerSearching ? (
+                          <ActivityIndicator size="small" color="white" />
+                        ) : (
+                          <>
+                            <Ionicons name="search" size={16} color="white" />
+                            <GaretText className="text-white font-semibold">Search</GaretText>
+                          </>
+                        )}
+                      </Pressable>
+                    </LinearGradient>
+                  </View>
+
+                  {/* Singer Search Results */}
+                  {singerSearchResults.length > 0 && (
+                    <View className="mt-4 bg-gray-50 rounded-lg border border-gray-200 max-h-64">
+                      <ScrollView showsVerticalScrollIndicator={false}>
+                        {singerSearchResults.map((result, index) => (
+                          <View
+                            key={index}
+                            className="p-3 flex-row items-center justify-between border-b border-gray-200"
+                          >
+                            <GaretText className="text-sm flex-1">
+                              {result.display || `${result.title} - ${result.artist.name}`}
+                            </GaretText>
+                            <Pressable
+                              onPress={() =>
+                                requestSong(
+                                  result.title,
+                                  result.artist.name,
+                                  result.album.cover || result.album.cover_medium
+                                )
+                              }
+                              className="bg-violet-400 px-3 py-2 rounded active:bg-violet-500"
+                            >
+                              <GaretText className="text-white text-xs font-semibold">
+                                Request
+                              </GaretText>
+                            </Pressable>
+                          </View>
+                        ))}
+                      </ScrollView>
+                    </View>
+                  )}
+                </View>
+              )}
+
               {/* Host Controls - Song Search */}
               {isHost && (
-                <View className="mb-4">
+                <View className="space-y-4">
                   <View className="flex-row gap-2">
                     <View className="flex-1">
                       <Input
@@ -426,9 +563,91 @@ export default function GroupScreen() {
                     </LinearGradient>
                   </View>
 
+                  {/* Song Requests Dropdown */}
+                  <View>
+                    <Pressable
+                      onPress={() => setIsRequestDropdownOpen(!isRequestDropdownOpen)}
+                      className="border border-gray-300 rounded-md px-4 py-3 flex-row items-center justify-between shadow-md active:bg-gray-50"
+                    >
+                      <GaretText className="text-sm font-semibold">Song Requests</GaretText>
+                      <View className="flex-row items-center gap-2">
+                        {songRequests.length > 0 && (
+                          <View className="bg-violet-500 rounded-full h-5 w-5 items-center justify-center">
+                            <GaretText className="text-white text-xs font-bold">
+                              {songRequests.length}
+                            </GaretText>
+                          </View>
+                        )}
+                        <Ionicons
+                          name={isRequestDropdownOpen ? 'chevron-up' : 'chevron-down'}
+                          size={16}
+                          color="#374151"
+                        />
+                      </View>
+                    </Pressable>
+
+                    {/* Dropdown Content */}
+                    {isRequestDropdownOpen && (
+                      <View className="mt-2 bg-white border border-gray-200 rounded-lg shadow-lg">
+                        {songRequests.length === 0 ? (
+                          <View className="p-4">
+                            <GaretText className="text-sm text-gray-500 text-center">
+                              No song requests yet
+                            </GaretText>
+                          </View>
+                        ) : (
+                          <ScrollView className="max-h-80" showsVerticalScrollIndicator={false}>
+                            {songRequests.map((request, index) => (
+                              <View
+                                key={index}
+                                className="p-3 flex-row items-center gap-3 border-b border-gray-200"
+                              >
+                                {request.albumCover && (
+                                  <Image
+                                    source={{ uri: request.albumCover }}
+                                    className="w-10 h-10 rounded"
+                                    style={{ width: 40, height: 40 }}
+                                  />
+                                )}
+                                <View className="flex-1">
+                                  <GaretText className="text-sm font-medium">
+                                    {request.title}
+                                  </GaretText>
+                                  <GaretText className="text-xs text-gray-500">
+                                    {request.artist}
+                                  </GaretText>
+                                  {request.requestCount > 1 && (
+                                    <GaretText className="text-xs text-violet-600 font-semibold">
+                                      Requested {request.requestCount}x
+                                    </GaretText>
+                                  )}
+                                </View>
+                                <LinearGradient
+                                  colors={['#c084fc', '#d8b4fe']}
+                                  start={{ x: 0, y: 0 }}
+                                  end={{ x: 1, y: 0 }}
+                                  style={{ borderRadius: 6 }}
+                                >
+                                  <Pressable
+                                    onPress={() => acceptSongRequest(request)}
+                                    className="px-3 py-2"
+                                  >
+                                    <GaretText className="text-white text-xs font-semibold">
+                                      Accept
+                                    </GaretText>
+                                  </Pressable>
+                                </LinearGradient>
+                              </View>
+                            ))}
+                          </ScrollView>
+                        )}
+                      </View>
+                    )}
+                  </View>
+
                   {/* Search Results */}
                   {searchResults.length > 0 && (
-                    <View className="mt-4">
+                    <View>
                       {searchResults.map((result, index) => (
                         <Pressable
                           key={index}
@@ -436,7 +655,6 @@ export default function GroupScreen() {
                           className="p-4 rounded-md mb-1"
                           style={({ pressed }) => ({
                             backgroundColor: pressed ? '#c4b5fd' : 'transparent',
-                            transition: 'background-color 0.2s',
                           })}
                         >
                           <GaretText className="text-base text-gray-900">

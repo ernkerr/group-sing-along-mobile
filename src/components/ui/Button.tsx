@@ -1,21 +1,27 @@
 import React from 'react'
-import { Pressable, Text, ActivityIndicator } from 'react-native'
+import { Pressable, Text, ActivityIndicator, View, Platform } from 'react-native'
+import { LinearGradient } from 'expo-linear-gradient'
 import { cva, type VariantProps } from 'class-variance-authority'
 import { cn } from '@/utils/cn'
 
 const buttonVariants = cva(
-  'flex-row items-center justify-center rounded-lg',
+  'flex-row items-center justify-center gap-2 rounded-md transition-all',
   {
     variants: {
       variant: {
-        default: 'bg-blue-600',
-        outline: 'border-2 border-blue-600 bg-transparent',
+        default: 'bg-primary shadow',
+        gradient: '', // Special variant - handled separately
+        destructive: 'bg-red-500 shadow-sm',
+        outline: 'border-2 border-violet-300 bg-white shadow-sm',
+        secondary: 'bg-gray-200 shadow-sm',
         ghost: 'bg-transparent',
+        link: 'bg-transparent',
       },
       size: {
-        default: 'h-12 px-6 py-3',
-        sm: 'h-10 px-4 py-2',
-        lg: 'h-14 px-8 py-4',
+        default: 'h-9 px-4 py-2',
+        sm: 'h-8 px-3',
+        lg: 'h-11 px-8',
+        icon: 'h-9 w-9',
       },
     },
     defaultVariants: {
@@ -25,62 +31,123 @@ const buttonVariants = cva(
   }
 )
 
-const textVariants = cva(
-  'font-semibold text-center',
-  {
-    variants: {
-      variant: {
-        default: 'text-white',
-        outline: 'text-blue-600',
-        ghost: 'text-blue-600',
-      },
-      size: {
-        default: 'text-base',
-        sm: 'text-sm',
-        lg: 'text-lg',
-      },
+const textVariants = cva('text-sm font-medium text-center', {
+  variants: {
+    variant: {
+      default: 'text-white',
+      gradient: 'text-white',
+      destructive: 'text-white',
+      outline: 'text-violet-400',
+      secondary: 'text-gray-900',
+      ghost: 'text-gray-900',
+      link: 'text-primary underline',
     },
-    defaultVariants: {
-      variant: 'default',
-      size: 'default',
+    size: {
+      default: 'text-sm',
+      sm: 'text-xs',
+      lg: 'text-base',
+      icon: 'text-sm',
     },
-  }
-)
+  },
+  defaultVariants: {
+    variant: 'default',
+    size: 'default',
+  },
+})
+
+// Platform-specific shadow styles
+const shadowStyles = Platform.select({
+  ios: {
+    shadowColor: '#000',
+    shadowOffset: { width: 0, height: 2 },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  android: {
+    elevation: 5,
+  },
+})
 
 interface ButtonProps extends VariantProps<typeof buttonVariants> {
-  onPress: () => void
-  children: string | React.ReactNode
+  onPress?: () => void
+  children?: string | React.ReactNode
   disabled?: boolean
   loading?: boolean
   className?: string
+  onClick?: () => void // Alias for onPress to match web API
 }
 
 export function Button({
   variant,
   size,
   onPress,
+  onClick,
   children,
   disabled,
   loading,
-  className
+  className,
 }: ButtonProps) {
+  const handlePress = onPress || onClick
+
+  // Content to render
+  const content = loading ? (
+    <ActivityIndicator
+      size="small"
+      color={variant === 'default' || variant === 'destructive' || variant === 'gradient' ? 'white' : '#374151'}
+    />
+  ) : typeof children === 'string' ? (
+    <Text className={textVariants({ variant, size })}>{children}</Text>
+  ) : (
+    <View className="flex-row items-center gap-2">{children}</View>
+  )
+
+  // Gradient variant uses LinearGradient wrapper
+  if (variant === 'gradient') {
+    return (
+      <LinearGradient
+        colors={['#c084fc', '#d8b4fe']} // violet-400 to violet-300
+        start={{ x: 0, y: 0 }}
+        end={{ x: 1, y: 0 }}
+        style={[
+          {
+            borderRadius: 6,
+            opacity: (disabled || loading) ? 0.5 : 1,
+          },
+          shadowStyles,
+        ]}
+      >
+        <Pressable
+          className={cn(
+            buttonVariants({ variant: 'gradient', size }),
+            className
+          )}
+          onPress={handlePress}
+          disabled={disabled || loading || !handlePress}
+          style={({ pressed }) => ({
+            opacity: pressed && !disabled && !loading ? 0.9 : 1,
+          })}
+        >
+          {content}
+        </Pressable>
+      </LinearGradient>
+    )
+  }
+
+  // All other variants
   return (
     <Pressable
       className={cn(
         buttonVariants({ variant, size }),
-        disabled && 'opacity-50',
+        (disabled || loading) && 'opacity-50',
         className
       )}
-      onPress={onPress}
-      disabled={disabled || loading}
+      onPress={handlePress}
+      disabled={disabled || loading || !handlePress}
+      style={({ pressed }) => ({
+        opacity: pressed && !disabled && !loading ? 0.9 : 1,
+      })}
     >
-      {loading ? (
-        <ActivityIndicator color={variant === 'default' ? 'white' : '#2563eb'} />
-      ) : typeof children === 'string' ? (
-        <Text className={textVariants({ variant, size })}>{children}</Text>
-      ) : (
-        children
-      )}
+      {content}
     </Pressable>
   )
 }

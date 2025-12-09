@@ -1,5 +1,5 @@
 import React from 'react'
-import { TextInput, View, Text, Platform } from 'react-native'
+import { TextInput, View, Text, Platform, ViewStyle } from 'react-native'
 import { cn } from '@/utils/cn'
 import { useTheme } from '@/context/ThemeContext'
 
@@ -20,6 +20,9 @@ interface InputProps {
   onSubmitEditing?: () => void
   onKeyDown?: (e: any) => void
   type?: string // For web compatibility
+  textAlign?: 'left' | 'center' | 'right'
+  textAlignVertical?: 'auto' | 'top' | 'bottom' | 'center'
+  style?: ViewStyle
 }
 
 // Enhanced shadow styles for lg shadow effect
@@ -52,6 +55,9 @@ export function Input({
   onSubmitEditing,
   onKeyDown,
   type,
+  textAlign = 'left',
+  textAlignVertical = 'auto',
+  style,
 }: InputProps) {
   const { colors, colorScheme } = useTheme()
 
@@ -89,8 +95,10 @@ export function Input({
             backgroundColor: colors.input,
             borderColor: colors.border,
             color: colors.foreground,
+            textAlign,
           },
           shadowStyles,
+          style,
         ]}
         placeholder={placeholder}
         placeholderTextColor={colorScheme === 'dark' ? '#9ca3af' : '#6b7280'}
@@ -104,6 +112,7 @@ export function Input({
         maxLength={maxLength}
         returnKeyType={returnKeyType}
         onSubmitEditing={onSubmitEditing}
+        textAlignVertical={textAlignVertical}
       />
     </View>
   )

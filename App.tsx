@@ -5,6 +5,13 @@ import { useFonts } from 'expo-font'
 import * as SplashScreen from 'expo-splash-screen'
 import AppNavigator from '@/navigation/AppNavigator'
 import { ThemeProvider } from '@/context/ThemeContext'
+import { configureReanimatedLogger, ReanimatedLogLevel } from 'react-native-reanimated'
+
+// Disable Reanimated strict mode warnings
+configureReanimatedLogger({
+  level: ReanimatedLogLevel.warn,
+  strict: false,
+})
 
 // Keep the splash screen visible while we load fonts
 SplashScreen.preventAutoHideAsync()

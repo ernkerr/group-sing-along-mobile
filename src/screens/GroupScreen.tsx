@@ -43,9 +43,7 @@ type GroupScreenRouteProp = RouteProp<RootStackParamList, "Group">;
 
 interface SearchResult {
   display?: string;
-  artist: {
-    name: string;
-  };
+  artist: string; // Backend returns artist as string, not object
   title: string;
   album: {
     cover?: string;
@@ -403,30 +401,30 @@ export default function GroupScreen() {
     setIsRequestDropdownOpen(false);
     await handleSelectSong({
       title: request.title,
-      artist: { name: request.artist },
+      artist: request.artist,
       album: { cover_medium: request.albumCover },
-    } as any);
+    } as SearchResult);
   };
 
   // Select a song and fetch/broadcast lyrics
-  const handleSelectSong = async (song: any) => {
+  const handleSelectSong = async (song: SearchResult) => {
     setIsFetchingLyrics(true);
     setSearchResults([]); // Clear search results immediately
 
     try {
       // Fetch lyrics
-      const fetchedLyrics = await api.fetchLyrics(song.artist.name, song.title);
+      const fetchedLyrics = await api.fetchLyrics(song.artist, song.title);
 
       // Update local state
       setLyrics(fetchedLyrics);
       setCurrentSong(song.title);
-      setCurrentArtist(song.artist.name);
+      setCurrentArtist(song.artist);
       setAlbumCover(song.album.cover_medium);
 
       // Broadcast to all users via Pusher
       await api.triggerPusherEvent(`group-lyrics-${groupId}`, "lyric-update", {
         title: song.title,
-        artist: song.artist.name,
+        artist: song.artist,
         lyrics: fetchedLyrics,
         albumCover: song.album.cover_medium,
       });
@@ -593,13 +591,13 @@ export default function GroupScreen() {
                     >
                       <GaretText className="text-sm flex-1">
                         {result.display ||
-                          `${result.title} - ${result.artist.name}`}
+                          `${result.title} - ${result.artist}`}
                       </GaretText>
                       <Pressable
                         onPress={() =>
                           requestSong(
                             result.title,
-                            result.artist.name,
+                            result.artist,
                             result.album.cover || result.album.cover_medium
                           )
                         }
@@ -688,7 +686,7 @@ export default function GroupScreen() {
                 >
                   <GaretText className="text-base text-gray-900">
                     {result.display ||
-                      `${result.title} - ${result.artist.name}`}
+                      `${result.title} - ${result.artist}`}
                   </GaretText>
                 </Pressable>
               ))}

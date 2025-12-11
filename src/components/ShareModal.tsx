@@ -3,6 +3,7 @@ import { View, Modal, Pressable, Share, Platform } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import QRCode from 'react-native-qrcode-svg'
 import { RocaText, GaretText } from '@/components/ui/Typography'
+import { useTheme } from '@/context/ThemeContext'
 
 interface ShareModalProps {
   isVisible: boolean
@@ -11,6 +12,7 @@ interface ShareModalProps {
 }
 
 export function ShareModal({ isVisible, onClose, groupId }: ShareModalProps) {
+  const { colors } = useTheme()
   const shareUrl = `https://groupsingalong.com/group/${groupId}`
 
   const handleNativeShare = async () => {
@@ -45,17 +47,21 @@ export function ShareModal({ isVisible, onClose, groupId }: ShareModalProps) {
         {/* Modal content */}
         <View className="flex-1 items-center justify-center p-4">
           <Pressable
-            className="w-full max-w-lg bg-white rounded-2xl p-6 shadow-xl"
+            className="w-full max-w-lg rounded-2xl p-6 shadow-xl"
+            style={{ backgroundColor: colors.card }}
             onPress={(e) => e.stopPropagation()}
           >
             {/* Title */}
-            <RocaText className="text-xl font-semibold text-gray-900 mb-2 text-center">
+            <RocaText
+              className="text-xl font-semibold mb-2 text-center"
+              style={{ color: colors.foreground }}
+            >
               Share with friends and family!
             </RocaText>
 
             {/* Group Code */}
             <View className="items-center justify-center mb-6">
-              <GaretText className="text-sm text-gray-600">
+              <GaretText className="text-sm" style={{ color: colors.mutedForeground }}>
                 Group Code:{' '}
                 <GaretText className="text-violet-500 font-semibold">
                   {groupId}
@@ -80,20 +86,24 @@ export function ShareModal({ isVisible, onClose, groupId }: ShareModalProps) {
                     <GaretText className="text-white text-6xl">📤</GaretText>
                   </LinearGradient>
                 </Pressable>
-                <GaretText className="text-sm text-gray-600">Share</GaretText>
+                <GaretText className="text-sm" style={{ color: colors.mutedForeground }}>
+                  Share
+                </GaretText>
               </View>
 
               {/* QR Code */}
               <View className="items-center gap-1">
-                <View className="bg-white p-2 rounded-lg">
+                <View className="p-2 rounded-lg" style={{ backgroundColor: colors.card }}>
                   <QRCode
                     value={shareUrl}
                     size={128}
                     color="#a78bfa"
-                    backgroundColor="white"
+                    backgroundColor={colors.card}
                   />
                 </View>
-                <GaretText className="text-sm text-gray-600">Scan QR Code</GaretText>
+                <GaretText className="text-sm" style={{ color: colors.mutedForeground }}>
+                  Scan QR Code
+                </GaretText>
               </View>
             </View>
 

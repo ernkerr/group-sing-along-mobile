@@ -16,6 +16,7 @@ interface ThemeColors {
   mutedForeground: string
   border: string
   input: string
+  destructive: string
   gradientPrimary: string[]
   gradientHover: string[]
 }
@@ -38,6 +39,7 @@ const lightColors: ThemeColors = {
   mutedForeground: '#64748b',
   border: '#e2e8f0',
   input: '#e2e8f0',
+  destructive: '#ef4444',
   gradientPrimary: ['#c084fc', '#d8b4fe'], // violet-400 to violet-300
   gradientHover: ['#a855f7', '#c084fc'],   // violet-500 to violet-400
 }
@@ -53,8 +55,9 @@ const darkColors: ThemeColors = {
   secondaryForeground: '#f8fafc',
   muted: '#7c8a99',
   mutedForeground: '#94a3b8',
-  border: '#1e293b',
+  border: '#1a2332',
   input: '#2e2e2e',
+  destructive: '#8b1a1a',
   gradientPrimary: ['#c084fc', '#d8b4fe'], // Same in dark mode
   gradientHover: ['#a855f7', '#c084fc'],   // Same in dark mode
 }

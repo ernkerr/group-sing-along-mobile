@@ -9,19 +9,20 @@ import {
 import { LinearGradient } from "expo-linear-gradient";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/utils/cn";
+import { useTheme } from "@/context/ThemeContext";
 
 const buttonVariants = cva(
   "flex-row items-center justify-center gap-2 rounded-md transition-all",
   {
     variants: {
       variant: {
-        default: "bg-primary shadow",
+        default: "shadow",
         gradient: "", // Special variant - handled separately
-        destructive: "bg-red-500 shadow-sm",
-        outline: "border-2 border-violet-300 bg-white shadow-sm",
-        secondary: "bg-gray-200 shadow-sm",
-        ghost: "bg-transparent",
-        link: "bg-transparent",
+        destructive: "shadow-sm",
+        outline: "border-2 shadow-sm",
+        secondary: "shadow-sm",
+        ghost: "",
+        link: "",
       },
       size: {
         default: "h-9 px-4 py-2",
@@ -40,13 +41,13 @@ const buttonVariants = cva(
 const textVariants = cva("text-sm font-medium text-center", {
   variants: {
     variant: {
-      default: "text-white",
+      default: "",
       gradient: "text-white",
       destructive: "text-white",
       outline: "text-violet-400",
-      secondary: "text-gray-900",
-      ghost: "text-gray-900",
-      link: "text-primary underline",
+      secondary: "",
+      ghost: "",
+      link: "underline",
     },
     size: {
       default: "text-md",
@@ -63,18 +64,7 @@ const textVariants = cva("text-sm font-medium text-center", {
   },
 });
 
-// Platform-specific shadow styles
-const shadowStyles = Platform.select({
-  ios: {
-    shadowColor: "#000",
-    shadowOffset: { width: 0, height: 2 },
-    shadowOpacity: 0.25,
-    shadowRadius: 3.84,
-  },
-  android: {
-    elevation: 5,
-  },
-});
+// Platform-specific shadow styles - now created dynamically in component
 
 interface ButtonProps extends VariantProps<typeof buttonVariants> {
   onPress?: () => void;
@@ -96,21 +86,64 @@ export function Button({
   className,
 }: ButtonProps) {
   const handlePress = onPress || onClick;
+  const { colors, colorScheme } = useTheme();
+
+  // Theme-aware shadow styles
+  const shadowStyles = Platform.select({
+    ios: {
+      shadowColor: colorScheme === 'dark' ? '#fff' : '#000',
+      shadowOffset: { width: 0, height: 2 },
+      shadowOpacity: colorScheme === 'dark' ? 0.1 : 0.25,
+      shadowRadius: 3.84,
+    },
+    android: {
+      elevation: 5,
+    },
+  });
+
+  // Get variant-specific colors
+  const getVariantStyles = () => {
+    switch (variant) {
+      case 'default':
+        return { backgroundColor: colors.primary, color: colors.primaryForeground };
+      case 'destructive':
+        return { backgroundColor: colors.destructive, color: '#ffffff' };
+      case 'outline':
+        return { backgroundColor: 'transparent', borderColor: colors.border, color: '#a78bfa' };
+      case 'secondary':
+        return { backgroundColor: colors.secondary, color: colors.secondaryForeground };
+      case 'ghost':
+        return { backgroundColor: 'transparent', color: colors.foreground };
+      case 'link':
+        return { backgroundColor: 'transparent', color: colors.primary };
+      default:
+        return { backgroundColor: colors.primary, color: colors.primaryForeground };
+    }
+  };
+
+  const variantStyles = getVariantStyles();
+
+  // Get ActivityIndicator color based on variant
+  const getIndicatorColor = () => {
+    if (variant === 'gradient' || variant === 'destructive') return 'white';
+    if (variant === 'default') return colors.primaryForeground;
+    if (variant === 'outline') return '#a78bfa';
+    return variantStyles.color;
+  };
 
   // Content to render
   const content = loading ? (
     <ActivityIndicator
       size="small"
-      color={
-        variant === "default" ||
-        variant === "destructive" ||
-        variant === "gradient"
-          ? "white"
-          : "#374151"
-      }
+      color={getIndicatorColor()}
     />
   ) : typeof children === "string" ? (
-    <Text className={textVariants({ variant, size })}>{children}</Text>
+    <Text
+      className={textVariants({ variant, size })}
+      style={{ color: variantStyles.color }}
+    >
+      {children}
+    </Text>
   ) : (
     <View className="flex-row items-center gap-2">{children}</View>
   );
@@ -157,9 +190,14 @@ export function Button({
       )}
       onPress={handlePress}
       disabled={disabled || loading || !handlePress}
-      style={({ pressed }) => ({
-        opacity: pressed && !disabled && !loading ? 0.9 : 1,
-      })}
+      style={({ pressed }) => [
+        {
+          backgroundColor: variantStyles.backgroundColor,
+          borderColor: variantStyles.borderColor,
+          opacity: pressed && !disabled && !loading ? 0.9 : 1,
+        },
+        shadowStyles,
+      ]}
     >
       {content}
     </Pressable>

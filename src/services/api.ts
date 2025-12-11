@@ -7,16 +7,16 @@ interface PusherEventData {
 }
 
 interface DeezerTrack {
-  id: number
+  id?: number
   title: string
-  artist: {
-    name: string
-  }
+  artist: string // Backend returns artist as string, not object
+  display?: string
   album: {
-    title: string
+    title?: string
+    cover?: string
     cover_medium: string
   }
-  duration: number
+  duration?: number
 }
 
 interface LyricsResponse {
@@ -72,7 +72,6 @@ export const api = {
       }
 
       const result = await response.json()
-      console.log('Raw API response:', result)
 
       // Backend returns the array directly, not wrapped
       return Array.isArray(result) ? result : []
@@ -83,29 +82,100 @@ export const api = {
   },
 
   /**
-   * Fetch lyrics for a song via backend proxy
-   * Calls: GET /api/lyrics?artist=...&title=...
-   * This fixes CORS issues and cleans song titles (removes "Remastered", "Live", etc.)
+   * Fetch lyrics with multi-tier fallback system
+   * 1. Try lyrics.ovh API (primary, usually fast and reliable)
+   * 2. Fall back to LRCLib API (free backup)
+   * Cleans song titles (removes "Remastered", "Live", etc.) for better matches
    */
   fetchLyrics: async (artist: string, title: string): Promise<string> => {
-    try {
-      const response = await fetch(
-        `${API_BASE_URL}/api/lyrics?artist=${encodeURIComponent(artist)}&title=${encodeURIComponent(title)}`
-      )
-
-      if (!response.ok) {
-        if (response.status === 404) {
-          throw new Error('Lyrics not found')
-        }
-        throw new Error(`API error: ${response.status}`)
-      }
-
-      const data: LyricsResponse = await response.json()
-      return data.lyrics
-    } catch (error) {
-      console.error('Error fetching lyrics:', error)
-      throw error
+    // Validate inputs
+    if (!title || !artist) {
+      throw new Error(`Invalid song data: title="${title}", artist="${artist}"`)
     }
+
+    // Clean title and artist before sending (remove common suffixes/prefixes)
+    const cleanedTitle = title
+      .replace(/\s*\(.*?(Remaster|Remix|Live|Acoustic|Radio Edit|Album Version|Single Version).*?\)/gi, '')
+      .replace(/\s*-\s*(Remaster|Remix|Live|Acoustic|Radio Edit|Album Version|Single Version).*/gi, '')
+      .trim()
+
+    const cleanedArtist = artist
+      .replace(/\s*\(.*?\)/g, '') // Remove anything in parentheses
+      .trim()
+
+    // Helper function to fetch with timeout
+    const fetchWithTimeout = async (url: string, timeoutMs: number) => {
+      const controller = new AbortController()
+      const timeoutId = setTimeout(() => controller.abort(), timeoutMs)
+
+      try {
+        const response = await fetch(url, { signal: controller.signal })
+        clearTimeout(timeoutId)
+        return response
+      } catch (error) {
+        clearTimeout(timeoutId)
+        throw error
+      }
+    }
+
+    // Try lyrics.ovh first (primary source)
+    try {
+      console.log('Trying lyrics.ovh API...')
+      const lyricsOvhUrl = `https://api.lyrics.ovh/v1/${encodeURIComponent(cleanedArtist)}/${encodeURIComponent(cleanedTitle)}`
+
+      const response = await fetchWithTimeout(lyricsOvhUrl, 3000)
+
+      if (response.ok) {
+        const data: LyricsResponse = await response.json()
+        if (data.lyrics) {
+          console.log('✓ Lyrics found via lyrics.ovh')
+          return data.lyrics
+        }
+      }
+      console.log('lyrics.ovh did not return lyrics, trying fallback...')
+    } catch (error) {
+      console.log('lyrics.ovh failed, trying fallback...', error)
+    }
+
+    // Fall back to LRCLib
+    try {
+      console.log('Trying LRCLib API...')
+      const lrcLibUrl = `https://lrclib.net/api/get?artist_name=${encodeURIComponent(cleanedArtist)}&track_name=${encodeURIComponent(cleanedTitle)}`
+
+      const response = await fetchWithTimeout(lrcLibUrl, 3000)
+
+      if (response.ok) {
+        const data = await response.json()
+        if (data.plainLyrics) {
+          console.log('✓ Lyrics found via LRCLib')
+          return data.plainLyrics
+        }
+      }
+      console.log('LRCLib did not return lyrics, trying final fallback...')
+    } catch (error) {
+      console.log('LRCLib failed, trying final fallback...', error)
+    }
+
+    // Final fallback to backend (may have caching or additional sources)
+    try {
+      console.log('Trying backend API (final fallback)...')
+      const backendUrl = `${API_BASE_URL}/api/lyrics?artist=${encodeURIComponent(cleanedArtist)}&title=${encodeURIComponent(cleanedTitle)}`
+
+      const response = await fetchWithTimeout(backendUrl, 3000)
+
+      if (response.ok) {
+        const data: LyricsResponse = await response.json()
+        if (data.lyrics) {
+          console.log('✓ Lyrics found via backend')
+          return data.lyrics
+        }
+      }
+    } catch (error) {
+      console.error('All lyrics services failed:', error)
+      throw new Error('Lyrics not found - no service could find this song')
+    }
+
+    throw new Error('Lyrics not found - no service could find this song')
   },
 }
 

@@ -68,7 +68,13 @@ export const api = {
       const result = await response.json()
 
       // Deezer API returns { data: [...] }
-      return result.data || []
+      // Transform the response to ensure artist is a string
+      const tracks = (result.data || []).map((track: any) => ({
+        ...track,
+        artist: typeof track.artist === 'object' ? track.artist.name : track.artist,
+      }))
+
+      return tracks
     } catch (error) {
       console.error('Error searching songs:', error)
       throw error
@@ -82,18 +88,22 @@ export const api = {
    * Cleans song titles (removes "Remastered", "Live", etc.) for better matches
    */
   fetchLyrics: async (artist: string, title: string): Promise<string> => {
-    // Validate inputs
+    // Validate inputs and ensure they're strings
     if (!title || !artist) {
       throw new Error(`Invalid song data: title="${title}", artist="${artist}"`)
     }
 
+    // Convert to string in case we receive an object (defensive programming)
+    const artistStr = typeof artist === 'object' ? (artist as any).name || String(artist) : String(artist)
+    const titleStr = String(title)
+
     // Clean title and artist before sending (remove common suffixes/prefixes)
-    const cleanedTitle = title
+    const cleanedTitle = titleStr
       .replace(/\s*\(.*?(Remaster|Remix|Live|Acoustic|Radio Edit|Album Version|Single Version).*?\)/gi, '')
       .replace(/\s*-\s*(Remaster|Remix|Live|Acoustic|Radio Edit|Album Version|Single Version).*/gi, '')
       .trim()
 
-    const cleanedArtist = artist
+    const cleanedArtist = artistStr
       .replace(/\s*\(.*?\)/g, '') // Remove anything in parentheses
       .trim()
 

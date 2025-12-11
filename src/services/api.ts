@@ -1,11 +1,5 @@
 const API_BASE_URL = process.env.EXPO_PUBLIC_API_BASE_URL
 
-interface PusherEventData {
-  channel: string
-  event: string
-  data: any
-}
-
 interface DeezerTrack {
   id?: number
   title: string
@@ -57,14 +51,14 @@ export const api = {
   },
 
   /**
-   * Search for songs via Deezer API through Next.js proxy
-   * Calls: GET /api/proxy?query=...
-   * Returns array of tracks directly (not wrapped in data property)
+   * Search for songs directly via Deezer API
+   * Calls: GET https://api.deezer.com/search?q={query}
+   * Much faster than going through backend proxy
    */
   searchSongs: async (query: string): Promise<DeezerTrack[]> => {
     try {
       const response = await fetch(
-        `${API_BASE_URL}/api/proxy?query=${encodeURIComponent(query)}`
+        `https://api.deezer.com/search?q=${encodeURIComponent(query)}`
       )
 
       if (!response.ok) {
@@ -73,8 +67,8 @@ export const api = {
 
       const result = await response.json()
 
-      // Backend returns the array directly, not wrapped
-      return Array.isArray(result) ? result : []
+      // Deezer API returns { data: [...] }
+      return result.data || []
     } catch (error) {
       console.error('Error searching songs:', error)
       throw error

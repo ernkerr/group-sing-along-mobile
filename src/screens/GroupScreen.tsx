@@ -34,6 +34,7 @@ import { storage } from "@/services/storage";
 import { usePusher } from "@/hooks/usePusher";
 import { api } from "@/services/api";
 import type { RootStackParamList } from "@/types";
+import { useTheme } from "@/context/ThemeContext";
 
 import iconDark from "../assets/iconDark.png";
 
@@ -64,6 +65,7 @@ export default function GroupScreen() {
   const navigation = useNavigation();
   const { id: groupId } = route.params;
   const insets = useSafeAreaInsets();
+  const { colors } = useTheme();
   const [isHost, setIsHost] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -443,19 +445,28 @@ export default function GroupScreen() {
 
   if (loading) {
     return (
-      <SafeAreaView className="flex-1 bg-white">
+      <SafeAreaView
+        className="flex-1"
+        style={{ backgroundColor: colors.background }}
+      >
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#c084fc" />
-          <GaretText className="text-gray-600 mt-4">Loading...</GaretText>
+          <ActivityIndicator size="large" color="#C4B4FD" />
+          <GaretText className="mt-4" style={{ color: colors.mutedForeground }}>
+            Loading...
+          </GaretText>
         </View>
       </SafeAreaView>
     );
   }
 
   return (
-    <SafeAreaView className="flex-1 bg-gray-50" edges={["bottom"]}>
+    <SafeAreaView
+      className="flex-1"
+      style={{ backgroundColor: colors.background }}
+      edges={["bottom"]}
+    >
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
-        <View className="bg-white">
+        <View style={{ backgroundColor: colors.background }}>
           {/* Main Content Container */}
           {/* Header with Gradient Background */}
           <LinearGradient
@@ -469,7 +480,7 @@ export default function GroupScreen() {
             }}
           >
             <View className="flex-row items-center justify-between">
-              <View className="flex-row items-center gap-2 ml-6">
+              <View className="flex-row items-center gap-2 ml-2">
                 <Image
                   source={iconDark}
                   style={{ width: 25, height: 25 }}
@@ -505,16 +516,26 @@ export default function GroupScreen() {
 
           {/* Info Rows */}
           <View
-            className="bg-white px-6 py-4 flex-row items-center justify-between"
-            style={{ borderTopLeftRadius: 20, borderTopRightRadius: 20 }}
+            className="px-6 py-4 flex-row items-center justify-between"
+            style={{
+              borderTopLeftRadius: 20,
+              borderTopRightRadius: 20,
+              backgroundColor: colors.card,
+            }}
           >
-            <GaretText className="text-lg text-gray-700 font-medium">
+            <GaretText
+              className="text-lg font-medium"
+              style={{ color: colors.foreground }}
+            >
               Role:{" "}
               <GaretText className="font-semibold">
                 {isHost ? "Host" : "Singer"}
               </GaretText>
             </GaretText>
-            <GaretText className="text-lg text-gray-700 font-medium">
+            <GaretText
+              className="text-lg font-medium"
+              style={{ color: colors.foreground }}
+            >
               Group Code:{" "}
               <GaretText className="font-semibold">{groupId}</GaretText>
             </GaretText>
@@ -590,8 +611,7 @@ export default function GroupScreen() {
                       className="p-3 flex-row items-center justify-between border-b border-gray-200"
                     >
                       <GaretText className="text-sm flex-1">
-                        {result.display ||
-                          `${result.title} - ${result.artist}`}
+                        {result.display || `${result.title} - ${result.artist}`}
                       </GaretText>
                       <Pressable
                         onPress={() =>
@@ -685,8 +705,7 @@ export default function GroupScreen() {
                   })}
                 >
                   <GaretText className="text-base text-gray-900">
-                    {result.display ||
-                      `${result.title} - ${result.artist}`}
+                    {result.display || `${result.title} - ${result.artist}`}
                   </GaretText>
                 </Pressable>
               ))}
@@ -886,9 +905,9 @@ export default function GroupScreen() {
           {/* Leave Group Button */}
           <Pressable
             onPress={handleLeaveGroup}
-            className="mx-6 mt-4 mb-6 border border-gray-300 px-4 py-3 rounded-lg items-center active:bg-gray-100"
+            className="mx-6 my-6 mb-12 border border-violet-300 px-4 py-3 rounded-lg items-center active:bg-gray-100"
           >
-            <GaretText className="text-gray-700 font-semibold">
+            <GaretText className="text-violet-400 font-semibold">
               Leave Group
             </GaretText>
           </Pressable>

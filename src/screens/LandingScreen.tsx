@@ -3,19 +3,20 @@ import { View, ScrollView, Modal, Pressable } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
-import { Mic, BookOpen, Users, Smartphone, X } from "lucide-react-native";
+import { Mic, Users, X } from "lucide-react-native";
 import { BricolageText, InterText } from "@/components/ui/Typography";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
-import { Card } from "@/components/ui/Card";
 import { generateGroupCode } from "@/utils/generateCode";
 import { storage } from "@/services/storage";
 import type { RootStackParamList } from "@/types";
+import { useTheme } from "@/context/ThemeContext";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, "Landing">;
 
 export default function LandingScreen() {
   const navigation = useNavigation<NavigationProp>();
+  const { colors } = useTheme();
   const [isCreating, setIsCreating] = useState(false);
   const [showJoinInput, setShowJoinInput] = useState(false);
   const [joinCode, setJoinCode] = useState("");
@@ -54,12 +55,21 @@ export default function LandingScreen() {
   };
 
   return (
-    <SafeAreaView className="flex-1 bg-white">
+    <SafeAreaView
+      className="flex-1"
+      style={{ backgroundColor: colors.background }}
+    >
       <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
         {/* Header */}
-        <View className="flex-row items-center gap-2 px-6 py-4 border-b border-gray-200">
-          <Mic size={24} color="#1f2937" />
-          <BricolageText className="text-gray-900 text-xl font-semibold">
+        <View
+          className="flex-row items-center gap-2 px-6 py-4 border-b"
+          style={{ borderBottomColor: colors.border }}
+        >
+          <Mic size={24} color={colors.foreground} />
+          <BricolageText
+            className="text-xl font-semibold"
+            style={{ color: colors.foreground }}
+          >
             Group Sing Along
           </BricolageText>
         </View>
@@ -68,14 +78,23 @@ export default function LandingScreen() {
           {/* Hero Section */}
           <View className="items-center mb-8">
             <BricolageText
-              className="text-gray-900 text-center mb-4"
-              style={{ fontSize: 36, fontWeight: "bold", lineHeight: 44 }}
+              className="text-center mb-4"
+              style={{
+                fontSize: 36,
+                fontWeight: "bold",
+                lineHeight: 44,
+                color: colors.foreground,
+              }}
             >
               Make Group Singing Easy and Fun
             </BricolageText>
             <InterText
-              className="text-gray-600 text-center mb-8"
-              style={{ fontSize: 16, lineHeight: 24 }}
+              className="text-center mb-8"
+              style={{
+                fontSize: 16,
+                lineHeight: 24,
+                color: colors.mutedForeground,
+              }}
             >
               The perfect solution for family gatherings, parties, and any group
               sing-along event. Everyone sees the lyrics in real-time,
@@ -102,7 +121,10 @@ export default function LandingScreen() {
                 size="lg"
                 disabled={isCreating}
               >
-                <InterText className="text-violet-400 font-semibold text-xl">
+                <InterText
+                  className="font-semibold text-xl"
+                  style={{ color: "#C4B4FD" }}
+                >
                   Join Group
                 </InterText>
               </Button>
@@ -122,30 +144,39 @@ export default function LandingScreen() {
             >
               <Pressable onPress={(e) => e.stopPropagation()}>
                 <View
-                  className="bg-white rounded-2xl p-8 w-full max-w-md"
-                  style={{ minWidth: 320 }}
+                  className="rounded-2xl p-8 w-full max-w-md"
+                  style={{ minWidth: 320, backgroundColor: colors.card }}
                 >
                   {/* Modal Header */}
                   <View className="flex-row items-center justify-between mb-6">
-                    <BricolageText className="text-2xl font-bold text-gray-900">
+                    <BricolageText
+                      className="text-2xl font-bold"
+                      style={{ color: colors.foreground }}
+                    >
                       Join Group
                     </BricolageText>
                     <Pressable
                       onPress={() => setShowJoinInput(false)}
                       className="p-2 -mr-2"
                     >
-                      <X size={24} color="#6b7280" />
+                      <X size={24} color={colors.muted} />
                     </Pressable>
                   </View>
 
                   {/* Modal Content */}
-                  <InterText className="text-base text-gray-600 mb-6">
+                  <InterText
+                    className="text-base mb-6"
+                    style={{ color: colors.mutedForeground }}
+                  >
                     Enter the 4-letter code shared by your group host to join
                     the sing-along session.
                   </InterText>
 
                   <View className="mb-6">
-                    <InterText className="text-sm font-semibold text-gray-700 mb-2">
+                    <InterText
+                      className="text-sm font-semibold mb-2"
+                      style={{ color: colors.foreground }}
+                    >
                       Group Code
                     </InterText>
                     <Input
@@ -179,7 +210,10 @@ export default function LandingScreen() {
                       variant="ghost"
                       size="lg"
                     >
-                      <InterText className="text-gray-600 font-semibold text-base">
+                      <InterText
+                        className="font-semibold text-base"
+                        style={{ color: colors.mutedForeground }}
+                      >
                         Cancel
                       </InterText>
                     </Button>
@@ -200,99 +234,180 @@ export default function LandingScreen() {
                 elevation: 10,
               }}
             >
-              <Card className="bg-white border border-gray-200 overflow-hidden">
-                <View className="bg-gray-100 px-4 py-3 flex-row items-center justify-between border-b border-gray-200">
+              <View
+                className="border overflow-hidden rounded-lg"
+                style={{
+                  borderColor: colors.border,
+                  backgroundColor: colors.card,
+                }}
+              >
+                <View
+                  className="px-4 py-3 flex-row items-center justify-between border-b"
+                  style={{
+                    backgroundColor: colors.muted,
+                    borderBottomColor: colors.border,
+                  }}
+                >
                   <View className="flex-row items-center gap-2">
-                    <Mic size={18} color="#6b7280" />
-                    <InterText className="text-sm font-semibold text-gray-700">
+                    <Mic size={18} color={colors.mutedForeground} />
+                    <InterText
+                      className="text-sm font-semibold"
+                      style={{ color: colors.foreground }}
+                    >
                       Family Sing-Along
                     </InterText>
                   </View>
                   <View className="flex-row items-center gap-1">
-                    <Users size={16} color="#6b7280" />
-                    <InterText className="text-sm text-gray-600">
+                    <Users size={16} color={colors.mutedForeground} />
+                    <InterText
+                      className="text-sm"
+                      style={{ color: colors.mutedForeground }}
+                    >
                       12 members
                     </InterText>
                   </View>
                 </View>
                 <View className="px-4 py-6">
-                  <BricolageText className="text-2xl font-bold text-gray-900 text-center mb-2">
+                  <BricolageText
+                    className="text-2xl font-bold text-center mb-2"
+                    style={{ color: colors.foreground }}
+                  >
                     Bohemian Rhapsody
                   </BricolageText>
-                  <InterText className="text-base text-gray-600 text-center mb-6">
+                  <InterText
+                    className="text-base text-center mb-6"
+                    style={{ color: colors.mutedForeground }}
+                  >
                     Queen
                   </InterText>
                   <View className="gap-3">
-                    <InterText className="text-lg text-gray-900 text-center">
+                    <InterText
+                      className="text-lg text-center"
+                      style={{ color: colors.foreground }}
+                    >
                       Is this the real life?
                     </InterText>
-                    <InterText className="text-lg font-bold text-gray-900 text-center">
+                    <InterText
+                      className="text-lg font-bold text-center"
+                      style={{ color: colors.foreground }}
+                    >
                       Is this just fantasy?
                     </InterText>
-                    <InterText className="text-lg text-gray-900 text-center">
+                    <InterText
+                      className="text-lg text-center"
+                      style={{ color: colors.foreground }}
+                    >
                       Caught in a landslide,
                     </InterText>
-                    <InterText className="text-lg text-gray-900 text-center">
+                    <InterText
+                      className="text-lg text-center"
+                      style={{ color: colors.foreground }}
+                    >
                       no escape from reality
                     </InterText>
-                    <InterText className="text-lg text-gray-900 text-center">
+                    <InterText
+                      className="text-lg text-center"
+                      style={{ color: colors.foreground }}
+                    >
                       I'm just a poor boy,
                     </InterText>
                   </View>
                 </View>
-              </Card>
+              </View>
             </View>
           </View>
 
           {/* How it Works */}
           <View className="mb-12">
-            <BricolageText className="text-3xl font-bold text-gray-900 mb-3 text-center">
+            <BricolageText
+              className="text-3xl font-bold mb-3 text-center"
+              style={{ color: colors.foreground }}
+            >
               How It Works
             </BricolageText>
-            <InterText className="text-base text-gray-600 text-center mb-8">
+            <InterText
+              className="text-base text-center mb-8"
+              style={{ color: colors.mutedForeground }}
+            >
               Get started in just three simple steps
             </InterText>
 
             <View className="gap-6">
               <View className="items-center">
-                <View className="bg-gray-900 w-16 h-16 rounded-full items-center justify-center mb-4">
-                  <InterText className="text-white font-bold text-2xl">
+                <View
+                  className="w-16 h-16 rounded-full items-center justify-center mb-4"
+                  style={{ backgroundColor: colors.primary }}
+                >
+                  <InterText
+                    className="font-bold text-2xl"
+                    style={{ color: colors.primaryForeground }}
+                  >
                     1
                   </InterText>
                 </View>
-                <BricolageText className="text-xl font-bold text-gray-900 mb-2 text-center">
+                <BricolageText
+                  className="text-xl font-bold mb-2 text-center"
+                  style={{ color: colors.foreground }}
+                >
                   Create a Group
                 </BricolageText>
-                <InterText className="text-base text-gray-600 text-center">
+                <InterText
+                  className="text-base text-center"
+                  style={{ color: colors.mutedForeground }}
+                >
                   Start a new sing-along session as the host and get a unique
                   group code.
                 </InterText>
               </View>
 
               <View className="items-center">
-                <View className="bg-gray-900 w-16 h-16 rounded-full items-center justify-center mb-4">
-                  <InterText className="text-white font-bold text-2xl">
+                <View
+                  className="w-16 h-16 rounded-full items-center justify-center mb-4"
+                  style={{ backgroundColor: colors.primary }}
+                >
+                  <InterText
+                    className="font-bold text-2xl"
+                    style={{ color: colors.primaryForeground }}
+                  >
                     2
                   </InterText>
                 </View>
-                <BricolageText className="text-xl font-bold text-gray-900 mb-2 text-center">
+                <BricolageText
+                  className="text-xl font-bold mb-2 text-center"
+                  style={{ color: colors.foreground }}
+                >
                   Share the Code
                 </BricolageText>
-                <InterText className="text-base text-gray-600 text-center">
+                <InterText
+                  className="text-base text-center"
+                  style={{ color: colors.mutedForeground }}
+                >
                   Invite others to join your group by sharing the unique code.
                 </InterText>
               </View>
 
               <View className="items-center">
-                <View className="bg-gray-900 w-16 h-16 rounded-full items-center justify-center mb-4">
-                  <InterText className="text-white font-bold text-2xl">
+                <View
+                  className="w-16 h-16 rounded-full items-center justify-center mb-4"
+                  style={{ backgroundColor: colors.primary }}
+                >
+                  <InterText
+                    className="font-bold text-2xl"
+                    style={{ color: colors.primaryForeground }}
+                  >
                     3
                   </InterText>
                 </View>
-                <BricolageText className="text-xl font-bold text-gray-900 mb-2 text-center">
+                <BricolageText
+                  className="text-xl font-bold mb-2 text-center"
+                  style={{ color: colors.foreground }}
+                >
                   Start Singing
                 </BricolageText>
-                <InterText className="text-base text-gray-600 text-center">
+                <InterText
+                  className="text-base text-center"
+                  style={{ color: colors.mutedForeground }}
+                >
                   Select songs and control the lyrics display for everyone in
                   the group.
                 </InterText>

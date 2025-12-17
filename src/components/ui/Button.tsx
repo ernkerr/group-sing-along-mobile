@@ -19,7 +19,7 @@ const buttonVariants = cva(
         default: "shadow",
         gradient: "", // Special variant - handled separately
         destructive: "shadow-sm",
-        outline: "border-2 shadow-sm",
+        outline: "",
         secondary: "shadow-sm",
         ghost: "",
         link: "",
@@ -91,9 +91,9 @@ export function Button({
   // Theme-aware shadow styles
   const shadowStyles = Platform.select({
     ios: {
-      shadowColor: colorScheme === 'dark' ? '#fff' : '#000',
+      shadowColor: colorScheme === "dark" ? "#fff" : "#000",
       shadowOffset: { width: 0, height: 2 },
-      shadowOpacity: colorScheme === 'dark' ? 0.1 : 0.25,
+      shadowOpacity: colorScheme === "dark" ? 0.1 : 0.25,
       shadowRadius: 3.84,
     },
     android: {
@@ -104,20 +104,35 @@ export function Button({
   // Get variant-specific colors
   const getVariantStyles = () => {
     switch (variant) {
-      case 'default':
-        return { backgroundColor: colors.primary, color: colors.primaryForeground };
-      case 'destructive':
-        return { backgroundColor: colors.destructive, color: '#ffffff' };
-      case 'outline':
-        return { backgroundColor: 'transparent', borderColor: colors.border, color: '#a78bfa' };
-      case 'secondary':
-        return { backgroundColor: colors.secondary, color: colors.secondaryForeground };
-      case 'ghost':
-        return { backgroundColor: 'transparent', color: colors.foreground };
-      case 'link':
-        return { backgroundColor: 'transparent', color: colors.primary };
+      case "default":
+        return {
+          backgroundColor: colors.primary,
+          color: colors.primaryForeground,
+        };
+      case "destructive":
+        return { backgroundColor: colors.destructive, color: "#ffffff" };
+      case "outline":
+        return {
+          backgroundColor: "transparent" as const,
+          borderColor: "#C4B4FD",
+          borderWidth: 1,
+          borderStyle: "solid" as const,
+          color: "#C4B4FD",
+        };
+      case "secondary":
+        return {
+          backgroundColor: colors.secondary,
+          color: colors.secondaryForeground,
+        };
+      case "ghost":
+        return { backgroundColor: "transparent", color: colors.foreground };
+      case "link":
+        return { backgroundColor: "transparent", color: colors.primary };
       default:
-        return { backgroundColor: colors.primary, color: colors.primaryForeground };
+        return {
+          backgroundColor: colors.primary,
+          color: colors.primaryForeground,
+        };
     }
   };
 
@@ -125,18 +140,15 @@ export function Button({
 
   // Get ActivityIndicator color based on variant
   const getIndicatorColor = () => {
-    if (variant === 'gradient' || variant === 'destructive') return 'white';
-    if (variant === 'default') return colors.primaryForeground;
-    if (variant === 'outline') return '#a78bfa';
+    if (variant === "gradient" || variant === "destructive") return "white";
+    if (variant === "default") return colors.primaryForeground;
+    if (variant === "outline") return "#a78bfa";
     return variantStyles.color;
   };
 
   // Content to render
   const content = loading ? (
-    <ActivityIndicator
-      size="small"
-      color={getIndicatorColor()}
-    />
+    <ActivityIndicator size="small" color={getIndicatorColor()} />
   ) : typeof children === "string" ? (
     <Text
       className={textVariants({ variant, size })}
@@ -181,6 +193,33 @@ export function Button({
   }
 
   // All other variants
+  // For outline variant, wrap in View to ensure border displays correctly
+  if (variant === "outline") {
+    return (
+      <View
+        style={{
+          borderColor: "#C4B4FD",
+          borderWidth: 2,
+          borderRadius: 6,
+          opacity: disabled || loading ? 0.5 : 1,
+        }}
+      >
+        <Pressable
+          className={cn(buttonVariants({ variant, size }), className)}
+          onPress={handlePress}
+          disabled={disabled || loading || !handlePress}
+          style={({ pressed }) => ({
+            backgroundColor: "transparent",
+            borderRadius: 6,
+            opacity: pressed && !disabled && !loading ? 0.9 : 1,
+          })}
+        >
+          {content}
+        </Pressable>
+      </View>
+    );
+  }
+
   return (
     <Pressable
       className={cn(
@@ -193,7 +232,7 @@ export function Button({
       style={({ pressed }) => [
         {
           backgroundColor: variantStyles.backgroundColor,
-          borderColor: variantStyles.borderColor,
+          borderRadius: 6,
           opacity: pressed && !disabled && !loading ? 0.9 : 1,
         },
         shadowStyles,

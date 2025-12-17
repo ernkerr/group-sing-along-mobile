@@ -1,9 +1,12 @@
 import React from 'react'
-import { View, Modal, Pressable, Share, Platform } from 'react-native'
+import { View, Modal, Pressable, Share, Platform, ImageBackground, Image } from 'react-native'
 import { LinearGradient } from 'expo-linear-gradient'
 import QRCode from 'react-native-qrcode-svg'
 import { RocaText, GaretText } from '@/components/ui/Typography'
 import { useTheme } from '@/context/ThemeContext'
+
+const texturedPurple = require('../../assets/texturedPurple.jpg')
+const messageIcon = require('../../assets/message.png')
 
 interface ShareModalProps {
   isVisible: boolean
@@ -38,92 +41,89 @@ export function ShareModal({ isVisible, onClose, groupId }: ShareModalProps) {
       animationType="fade"
       onRequestClose={onClose}
     >
-      {/* Background overlay */}
-      <Pressable
-        className="flex-1 bg-black/30"
-        onPress={onClose}
-        style={{ backgroundColor: 'rgba(0, 0, 0, 0.5)' }}
+      {/* Background with textured purple image */}
+      <ImageBackground
+        source={texturedPurple}
+        className="flex-1"
+        resizeMode="cover"
       >
-        {/* Modal content */}
-        <View className="flex-1 items-center justify-center p-4">
-          <Pressable
-            className="w-full max-w-lg rounded-2xl p-6 shadow-xl"
-            style={{ backgroundColor: colors.card }}
-            onPress={(e) => e.stopPropagation()}
-          >
-            {/* Title */}
-            <RocaText
-              className="text-xl font-semibold mb-2 text-center"
-              style={{ color: colors.foreground }}
-            >
-              Share with friends and family!
-            </RocaText>
-
-            {/* Group Code */}
-            <View className="items-center justify-center mb-6">
-              <GaretText className="text-sm" style={{ color: colors.mutedForeground }}>
-                Group Code:{' '}
-                <GaretText className="text-violet-500 font-semibold">
-                  {groupId}
-                </GaretText>
-              </GaretText>
-            </View>
-
-            {/* Share Options */}
-            <View className="flex-row items-center justify-center gap-12 mb-6">
-              {/* Native Share Button */}
-              <View className="items-center gap-1">
-                <Pressable
-                  onPress={handleNativeShare}
-                  className="w-32 h-32 rounded-full overflow-hidden shadow-lg active:opacity-80"
-                >
-                  <LinearGradient
-                    colors={['#c084fc', '#d8b4fe']}
-                    start={{ x: 0, y: 0 }}
-                    end={{ x: 1, y: 0 }}
-                    className="w-full h-full items-center justify-center"
-                  >
-                    <GaretText className="text-white text-6xl">📤</GaretText>
-                  </LinearGradient>
-                </Pressable>
-                <GaretText className="text-sm" style={{ color: colors.mutedForeground }}>
-                  Share
-                </GaretText>
-              </View>
-
-              {/* QR Code */}
-              <View className="items-center gap-1">
-                <View className="p-2 rounded-lg" style={{ backgroundColor: colors.card }}>
-                  <QRCode
-                    value={shareUrl}
-                    size={128}
-                    color="#a78bfa"
-                    backgroundColor={colors.card}
-                  />
-                </View>
-                <GaretText className="text-sm" style={{ color: colors.mutedForeground }}>
-                  Scan QR Code
-                </GaretText>
-              </View>
-            </View>
-
-            {/* Done Button */}
+        <Pressable
+          className="flex-1"
+          onPress={onClose}
+        >
+          {/* Modal content */}
+          <View className="flex-1 items-center justify-center p-4">
             <Pressable
-              onPress={onClose}
-              className="overflow-hidden rounded-md shadow-sm active:opacity-80"
+              className="w-full max-w-lg rounded-2xl p-6 shadow-xl"
+              style={{ backgroundColor: 'white' }}
+              onPress={(e) => e.stopPropagation()}
             >
-              <LinearGradient
-                colors={['#c084fc', '#d8b4fe']}
-                start={{ x: 0, y: 0 }}
-                end={{ x: 1, y: 0 }}
-                className="px-4 py-3 items-center"
+              {/* Title */}
+              <RocaText
+                className="text-xl font-semibold mb-2 text-center"
+                style={{ color: '#000' }}
+              >
+                Share with friends and family!
+              </RocaText>
+
+              {/* Group Code */}
+              <View className="items-center justify-center mb-6">
+                <GaretText className="text-sm" style={{ color: '#6b7280' }}>
+                  Group Code:{' '}
+                  <GaretText className="text-violet-500 font-semibold">
+                    {groupId}
+                  </GaretText>
+                </GaretText>
+              </View>
+
+              {/* Share Options */}
+              <View className="flex-row items-center justify-center gap-12 mb-6">
+                {/* Native Share Button with Message Icon */}
+                <View className="items-center gap-2">
+                  <Pressable
+                    onPress={handleNativeShare}
+                    className="w-32 h-32 rounded-full items-center justify-center active:opacity-80"
+                    style={{ backgroundColor: '#a78bfa' }}
+                  >
+                    <Image
+                      source={messageIcon}
+                      style={{ width: 64, height: 64, tintColor: 'white' }}
+                      resizeMode="contain"
+                    />
+                  </Pressable>
+                  <GaretText className="text-sm font-medium" style={{ color: '#6b7280' }}>
+                    Message
+                  </GaretText>
+                </View>
+
+                {/* QR Code */}
+                <View className="items-center gap-2">
+                  <View className="p-2 rounded-lg" style={{ backgroundColor: 'white' }}>
+                    <QRCode
+                      value={shareUrl}
+                      size={128}
+                      color="#a78bfa"
+                      backgroundColor="white"
+                    />
+                  </View>
+                  <GaretText className="text-sm font-medium" style={{ color: '#6b7280' }}>
+                    Scan QR Code
+                  </GaretText>
+                </View>
+              </View>
+
+              {/* Done Button */}
+              <Pressable
+                onPress={onClose}
+                className="rounded-lg shadow-sm active:opacity-80 items-center py-3"
+                style={{ backgroundColor: '#a78bfa' }}
               >
                 <GaretText className="text-white font-semibold">Done</GaretText>
-              </LinearGradient>
+              </Pressable>
             </Pressable>
-          </Pressable>
-        </View>
-      </Pressable>
+          </View>
+        </Pressable>
+      </ImageBackground>
     </Modal>
   )
 }

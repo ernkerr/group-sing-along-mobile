@@ -1,5 +1,5 @@
-import React, { createContext, useContext, ReactNode } from 'react'
-import { useColorScheme } from 'react-native'
+import React, { createContext, useContext, ReactNode, useState, useEffect } from 'react'
+import { Appearance } from 'react-native'
 
 type ColorScheme = 'light' | 'dark'
 
@@ -69,10 +69,25 @@ interface ThemeProviderProps {
 }
 
 export function ThemeProvider({ children }: ThemeProviderProps) {
-  const systemColorScheme = useColorScheme()
-  const colorScheme: ColorScheme = systemColorScheme === 'dark' ? 'dark' : 'light'
+  const [colorScheme, setColorScheme] = useState<ColorScheme>(
+    Appearance.getColorScheme() === 'dark' ? 'dark' : 'light'
+  )
+
+  useEffect(() => {
+    const subscription = Appearance.addChangeListener(({ colorScheme: newColorScheme }) => {
+      const newScheme = newColorScheme === 'dark' ? 'dark' : 'light'
+      setColorScheme(newScheme)
+      console.log('🎨 Theme changed to:', newScheme)
+    })
+
+    return () => subscription.remove()
+  }, [])
 
   const colors = colorScheme === 'dark' ? darkColors : lightColors
+
+  // Debug: Log the current theme
+  console.log('🎨 Theme Provider - Active:', colorScheme)
+  console.log('🎨 Background color:', colors.background)
 
   return (
     <ThemeContext.Provider value={{ colors, colorScheme }}>

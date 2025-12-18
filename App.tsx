@@ -1,10 +1,12 @@
 import './global.css'
 import React, { useEffect } from 'react'
+import { View } from 'react-native'
 import { StatusBar } from 'expo-status-bar'
 import { useFonts } from 'expo-font'
 import * as SplashScreen from 'expo-splash-screen'
 import AppNavigator from '@/navigation/AppNavigator'
 import { ThemeProvider } from '@/context/ThemeContext'
+import { MusicLoader } from '@/components/ui/MusicLoader'
 import { configureReanimatedLogger, ReanimatedLogLevel } from 'react-native-reanimated'
 
 // Disable Reanimated strict mode warnings
@@ -30,14 +32,23 @@ export default function App() {
     }
   }, [fontsLoaded, fontsError])
 
-  if (!fontsLoaded && !fontsError) {
-    return null
-  }
-
   return (
     <ThemeProvider>
-      <AppNavigator />
-      <StatusBar style="auto" />
+      {!fontsLoaded && !fontsError ? (
+        <View style={{
+          flex: 1,
+          backgroundColor: '#ffffff',
+          alignItems: 'center',
+          justifyContent: 'center'
+        }}>
+          <MusicLoader size="large" color="#A68BF7" />
+        </View>
+      ) : (
+        <>
+          <AppNavigator />
+          <StatusBar style="auto" />
+        </>
+      )}
     </ThemeProvider>
   )
 }

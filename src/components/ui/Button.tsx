@@ -2,7 +2,6 @@ import React from "react";
 import {
   Pressable,
   Text,
-  ActivityIndicator,
   View,
   Platform,
 } from "react-native";
@@ -10,6 +9,7 @@ import { LinearGradient } from "expo-linear-gradient";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/utils/cn";
 import { useTheme } from "@/context/ThemeContext";
+import { MusicLoader } from "./MusicLoader";
 
 const buttonVariants = cva(
   "flex-row items-center justify-center gap-2 rounded-md transition-all",
@@ -148,7 +148,7 @@ export function Button({
 
   // Content to render
   const content = loading ? (
-    <ActivityIndicator size="small" color={getIndicatorColor()} />
+    <MusicLoader size="small" color={getIndicatorColor()} />
   ) : typeof children === "string" ? (
     <Text
       className={textVariants({ variant, size })}

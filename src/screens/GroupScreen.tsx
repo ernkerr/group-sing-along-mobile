@@ -1,14 +1,12 @@
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, { useState, useEffect, useCallback } from "react";
 import {
   View,
   ScrollView,
   Image,
   Pressable,
-  ActivityIndicator,
   Alert,
   AppState,
   AppStateStatus,
-  Animated,
   Text,
   Platform,
 } from "react-native";
@@ -30,6 +28,7 @@ import {
 import { RocaText, GaretText } from "@/components/ui/Typography";
 import { Input } from "@/components/ui/Input";
 import { ShareModal } from "@/components/ShareModal";
+import { MusicLoader } from "@/components/ui/MusicLoader";
 import { storage } from "@/services/storage";
 import { usePusher } from "@/hooks/usePusher";
 import { api } from "@/services/api";
@@ -97,36 +96,9 @@ export default function GroupScreen() {
   // Share modal state
   const [isShareModalVisible, setIsShareModalVisible] = useState(false);
 
-  // Pulse animation for loading states
-  const pulseAnim = useRef(new Animated.Value(1)).current;
-
   useEffect(() => {
     loadRole();
   }, []);
-
-  // Pulse animation effect when loading
-  useEffect(() => {
-    if (isSearching || isFetchingLyrics) {
-      const pulse = Animated.loop(
-        Animated.sequence([
-          Animated.timing(pulseAnim, {
-            toValue: 0.6,
-            duration: 800,
-            useNativeDriver: true,
-          }),
-          Animated.timing(pulseAnim, {
-            toValue: 1,
-            duration: 800,
-            useNativeDriver: true,
-          }),
-        ])
-      );
-      pulse.start();
-      return () => pulse.stop();
-    } else {
-      pulseAnim.setValue(1);
-    }
-  }, [isSearching, isFetchingLyrics, pulseAnim]);
 
   const loadRole = async () => {
     try {
@@ -450,7 +422,7 @@ export default function GroupScreen() {
         style={{ backgroundColor: colors.background }}
       >
         <View className="flex-1 items-center justify-center">
-          <ActivityIndicator size="large" color="#C4B4FD" />
+          <MusicLoader size="large" color="#C4B4FD" />
           <GaretText className="mt-4" style={{ color: colors.mutedForeground }}>
             Loading...
           </GaretText>
@@ -585,7 +557,7 @@ export default function GroupScreen() {
                     style={{ height: 48 }}
                   >
                     {isSingerSearching ? (
-                      <ActivityIndicator size="small" color="white" />
+                      <MusicLoader size="small" color="white" />
                     ) : (
                       <>
                         <Search size={16} color="white" />
@@ -677,7 +649,7 @@ export default function GroupScreen() {
                     style={{ height: 48 }}
                   >
                     {isSearching ? (
-                      <ActivityIndicator size="small" color="white" />
+                      <MusicLoader size="small" color="white" />
                     ) : (
                       <>
                         <Search size={16} color="white" />
@@ -853,27 +825,22 @@ export default function GroupScreen() {
             )}
 
             {/* Lyrics Display */}
-            <Animated.View
+            <View
               className="p-4"
-              style={[
-                {
-                  minHeight: 400,
-                },
-                (isSearching || isFetchingLyrics) && {
-                  opacity: pulseAnim,
-                },
-              ]}
+              style={{
+                minHeight: 400,
+              }}
             >
               {isSearching ? (
                 <View className="flex-1 items-center justify-center">
-                  <ActivityIndicator size="large" color="#A68BF7" />
+                  <MusicLoader size="large" color="#A68BF7" />
                   <GaretText className="text-gray-400 mt-4">
                     Searching for songs...
                   </GaretText>
                 </View>
               ) : isFetchingLyrics ? (
                 <View className="flex-1 items-center justify-center">
-                  <ActivityIndicator size="large" color="#A68BF7" />
+                  <MusicLoader size="large" color="#A68BF7" />
 
                   <GaretText className="text-gray-400 mt-4">
                     Loading lyrics...
@@ -890,7 +857,7 @@ export default function GroupScreen() {
                   {lyrics || "Waiting for the Host to select a song..."}
                 </GaretText>
               )}
-            </Animated.View>
+            </View>
           </View>
 
           {/* Share Button */}

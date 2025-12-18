@@ -2,6 +2,7 @@
 export type RootStackParamList = {
   Landing: undefined
   Group: { id: string }
+  Pricing: undefined
 }
 
 // Search result types
@@ -31,3 +32,6 @@ export interface HostDisconnectData {
 export interface SubscriptionCountData {
   subscription_count: number
 }
+
+// Re-export subscription types
+export * from './subscription'

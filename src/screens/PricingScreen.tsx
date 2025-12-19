@@ -60,13 +60,13 @@ export default function PricingScreen() {
               onPress={() => tier.tier !== SubscriptionTier.FREE && setSelectedTier(tier.tier)}
               className="mb-4"
             >
-              <Card
-                className="p-6"
+              <View
                 style={
                   isSelected && tier.tier !== SubscriptionTier.FREE
                     ? {
                         borderWidth: 2,
                         borderColor: '#A68BF7',
+                        borderRadius: 8,
                         ...Platform.select({
                           ios: {
                             shadowColor: '#A68BF7',
@@ -82,6 +82,7 @@ export default function PricingScreen() {
                     : {}
                 }
               >
+                <Card className="p-6">
                 {/* Most Popular badge */}
                 {tier.isPopular && (
                   <View
@@ -192,13 +193,14 @@ export default function PricingScreen() {
                   ) : null}
                 </View>
               </Card>
+              </View>
             </Pressable>
           )
         })}
 
         {/* Event Pass section */}
         <View className="mt-6 mb-4">
-          <Card className="p-6" style={{ backgroundColor: colors.card }}>
+          <Card className="p-6">
             <GaretText
               className="text-lg font-semibold mb-2"
               style={{ color: colors.foreground }}

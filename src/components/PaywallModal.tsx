@@ -103,13 +103,13 @@ export function PaywallModal({ visible, onClose, currentMemberCount, userRole }:
                         onPress={() => setSelectedTier(tier.tier)}
                         className="mb-4"
                       >
-                        <Card
-                          className="p-4"
+                        <View
                           style={
                             isSelected
                               ? {
                                   borderWidth: 2,
                                   borderColor: '#A68BF7',
+                                  borderRadius: 8,
                                   ...Platform.select({
                                     ios: {
                                       shadowColor: '#A68BF7',
@@ -125,6 +125,7 @@ export function PaywallModal({ visible, onClose, currentMemberCount, userRole }:
                               : {}
                           }
                         >
+                          <Card className="p-4">
                           {/* Most Popular badge */}
                           {tier.isPopular && (
                             <View
@@ -227,6 +228,7 @@ export function PaywallModal({ visible, onClose, currentMemberCount, userRole }:
                             </View>
                           )}
                         </Card>
+                        </View>
                       </Pressable>
                     )
                   })}

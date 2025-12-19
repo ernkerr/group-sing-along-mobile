@@ -9,6 +9,7 @@ import {
   AppStateStatus,
   Text,
   Platform,
+  Modal,
 } from "react-native";
 import {
   SafeAreaView,
@@ -28,9 +29,11 @@ import {
 import { RocaText, GaretText } from "@/components/ui/Typography";
 import { Input } from "@/components/ui/Input";
 import { ShareModal } from "@/components/ShareModal";
+import { PaywallModal } from "@/components/PaywallModal";
 import { MusicLoader } from "@/components/ui/MusicLoader";
 import { storage } from "@/services/storage";
 import { usePusher } from "@/hooks/usePusher";
+import { useSubscription } from "@/hooks/useSubscription";
 import { api } from "@/services/api";
 import type { RootStackParamList } from "@/types";
 import { useTheme } from "@/context/ThemeContext";
@@ -95,6 +98,16 @@ export default function GroupScreen() {
 
   // Share modal state
   const [isShareModalVisible, setIsShareModalVisible] = useState(false);
+
+  // Paywall modal state
+  const [isPaywallVisible, setIsPaywallVisible] = useState(false);
+
+  // Limit modal state
+  const [showLimitModal, setShowLimitModal] = useState(false);
+  const [limitModalType, setLimitModalType] = useState<'host' | 'singer'>('host');
+
+  // Subscription state
+  const { tier, memberLimit, canInviteMore } = useSubscription();
 
   useEffect(() => {
     loadRole();
@@ -267,6 +280,21 @@ export default function GroupScreen() {
     onSongRequest: handleSongRequest,
   });
 
+  // Real-time member limit enforcement
+  useEffect(() => {
+    // Only enforce if member count exceeds limit
+    // Don't kick existing members, just show notification
+    if (memberCount > memberLimit && memberCount > 0) {
+      if (isHost) {
+        // Show modal to host
+        setLimitModalType('host');
+        setShowLimitModal(true);
+      }
+      // Note: We don't auto-kick singers - they can stay if they were already in
+      // New joins will be prevented by the handleInvite function
+    }
+  }, [memberCount, memberLimit, isHost]);
+
   // Handle app state changes for host disconnect
   useEffect(() => {
     if (!isHost) return;
@@ -415,6 +443,21 @@ export default function GroupScreen() {
     }
   };
 
+  // Handle invite button press (for both member count and share buttons)
+  const handleInvite = () => {
+    if (isHost) {
+      if (canInviteMore(memberCount)) {
+        // Under limit: just show share modal
+        setIsShareModalVisible(true);
+      } else {
+        // At limit: show share modal THEN paywall on top
+        setIsShareModalVisible(true);
+        // Small delay so share modal renders first
+        setTimeout(() => setIsPaywallVisible(true), 100);
+      }
+    }
+  };
+
   if (loading) {
     return (
       <SafeAreaView
@@ -463,7 +506,8 @@ export default function GroupScreen() {
                 </RocaText>
               </View>
               <Pressable
-                onPress={() => setIsShareModalVisible(true)}
+                onPress={handleInvite}
+                disabled={!isHost}
                 className="px-4 py-2 rounded-md flex-row items-center gap-1.5 mr-6"
                 style={{
                   borderRadius: 6,
@@ -482,6 +526,11 @@ export default function GroupScreen() {
                 <GaretText className="text-white text-md font-bold shadow-lg">
                   {memberCount} {memberCount === 1 ? "member" : "members"}
                 </GaretText>
+                {isHost && (
+                  <GaretText className="text-white text-xs opacity-80 ml-1">
+                    (tap to invite)
+                  </GaretText>
+                )}
               </Pressable>
             </View>
           </LinearGradient>
@@ -862,11 +911,14 @@ export default function GroupScreen() {
 
           {/* Share Button */}
           <Pressable
-            onPress={() => setIsShareModalVisible(true)}
+            onPress={handleInvite}
+            disabled={!isHost}
             className="mx-6 mt-6 bg-violet-300 px-4 py-3 rounded-lg flex-row items-center justify-center gap-2 shadow-lg active:bg-violet-400"
           >
             <Share2 size={16} color="white" />
-            <GaretText className="text-white font-semibold">Share</GaretText>
+            <GaretText className="text-white font-semibold">
+              {isHost ? 'Share' : 'Ask host to share'}
+            </GaretText>
           </Pressable>
 
           {/* Leave Group Button */}
@@ -887,6 +939,66 @@ export default function GroupScreen() {
         onClose={() => setIsShareModalVisible(false)}
         groupId={groupId}
       />
+
+      {/* Paywall Modal */}
+      <PaywallModal
+        visible={isPaywallVisible}
+        onClose={() => setIsPaywallVisible(false)}
+        currentMemberCount={memberCount}
+        userRole={isHost ? 'host' : 'singer'}
+      />
+
+      {/* Member Limit Modal */}
+      <Modal
+        visible={showLimitModal}
+        transparent
+        animationType="fade"
+        onRequestClose={() => setShowLimitModal(false)}
+      >
+        <View className="flex-1 bg-black/50 items-center justify-center p-4">
+          <Pressable
+            className="w-full max-w-lg rounded-2xl p-6"
+            style={{ backgroundColor: colors.card }}
+            onPress={(e) => e.stopPropagation()}
+          >
+            <RocaText className="text-xl font-semibold mb-4" style={{ color: colors.foreground }}>
+              {limitModalType === 'host' ? 'Member Limit Reached' : 'Room Full'}
+            </RocaText>
+            <GaretText className="text-base mb-6" style={{ color: colors.mutedForeground }}>
+              {limitModalType === 'host'
+                ? `Your ${tier} plan supports up to ${memberLimit} members. Upgrade to allow more.`
+                : 'This room has reached its member limit. Ask the host to upgrade.'}
+            </GaretText>
+            {limitModalType === 'host' ? (
+              <View className="flex-row gap-2">
+                <Pressable
+                  onPress={() => {
+                    setShowLimitModal(false);
+                    navigation.navigate('Pricing' as never);
+                  }}
+                  className="flex-1 bg-violet-400 py-3 rounded-lg items-center active:bg-violet-500"
+                >
+                  <GaretText className="text-white font-semibold">Upgrade</GaretText>
+                </Pressable>
+                <Pressable
+                  onPress={() => setShowLimitModal(false)}
+                  className="flex-1 py-3 rounded-lg items-center"
+                  style={{ borderWidth: 1, borderColor: colors.border }}
+                >
+                  <GaretText style={{ color: colors.foreground }}>Dismiss</GaretText>
+                </Pressable>
+              </View>
+            ) : (
+              <Pressable
+                onPress={() => setShowLimitModal(false)}
+                className="bg-violet-400 py-3 rounded-lg items-center active:bg-violet-500"
+              >
+                <GaretText className="text-white font-semibold">OK</GaretText>
+              </Pressable>
+            )}
+          </Pressable>
+        </View>
+      </Modal>
     </SafeAreaView>
   );
 }

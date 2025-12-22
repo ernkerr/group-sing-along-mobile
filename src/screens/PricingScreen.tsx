@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { View, ScrollView, SafeAreaView, Pressable, Platform } from 'react-native'
 import { useNavigation } from '@react-navigation/native'
+import { X } from 'lucide-react-native'
 import { RocaText, GaretText } from '@/components/ui/Typography'
 import { Card } from '@/components/ui/Card'
 import { Button } from '@/components/ui/Button'
@@ -26,8 +27,27 @@ export default function PricingScreen() {
     navigation.goBack()
   }
 
+  const calculateSavings = (monthlyPrice: number, yearlyPrice: number) => {
+    const monthlyCost = monthlyPrice * 12
+    const savings = Math.round(((monthlyCost - yearlyPrice) / monthlyCost) * 100)
+    return savings
+  }
+
   return (
     <SafeAreaView className="flex-1" style={{ backgroundColor: colors.background }}>
+      {/* Close button - top right */}
+      <View className="flex-row justify-end px-4 pt-2">
+        <Pressable
+          onPress={() => navigation.goBack()}
+          className="p-2"
+          style={({ pressed }) => ({
+            opacity: pressed ? 0.6 : 1,
+          })}
+        >
+          <X size={24} color={colors.foreground} />
+        </Pressable>
+      </View>
+
       <ScrollView className="flex-1 px-4 py-6" showsVerticalScrollIndicator={false}>
         {/* Header */}
         <View className="mb-8">
@@ -95,92 +115,165 @@ export default function PricingScreen() {
                   </View>
                 )}
 
-                {/* Tier name & emoji */}
-                <View className="flex-row items-center mb-2">
-                  <GaretText className="text-4xl mr-3">{tier.emoji}</GaretText>
+                {/* Tier name */}
+                <View className="mb-3">
                   <RocaText
-                    className="text-2xl font-bold"
+                    className="text-3xl font-bold"
                     style={{ color: colors.foreground }}
                   >
                     {tier.name}
                   </RocaText>
+                  <GaretText className="text-sm mt-1" style={{ color: colors.mutedForeground }}>
+                    {tier.valueStatement}
+                  </GaretText>
                 </View>
 
-                {/* Monthly/Yearly tabs for paid tiers */}
+                {/* Monthly/Yearly toggle for paid tiers */}
                 {tier.tier !== SubscriptionTier.FREE && tier.monthlyPrice && tier.yearlyPrice && (
-                  <View className="flex-row mb-3 p-1 rounded-lg" style={{ backgroundColor: colors.muted }}>
-                    <Pressable
-                      onPress={() => handlePeriodToggle(tier.tier, SubscriptionPeriod.MONTHLY)}
-                      className="flex-1 py-2 rounded-md"
+                  <View className="mb-3">
+                    <View
+                      className="flex-row p-1 rounded-lg"
                       style={{
-                        backgroundColor: selectedPeriod === SubscriptionPeriod.MONTHLY ? colors.card : 'transparent',
+                        backgroundColor: colors.muted,
+                        borderWidth: 1,
+                        borderColor: colors.border
                       }}
                     >
-                      <GaretText
-                        className="text-center text-sm font-semibold"
-                        style={{
-                          color: selectedPeriod === SubscriptionPeriod.MONTHLY ? colors.foreground : colors.mutedForeground,
-                        }}
+                      <Pressable
+                        onPress={() => handlePeriodToggle(tier.tier, SubscriptionPeriod.MONTHLY)}
+                        className="flex-1 py-3 rounded-md"
+                        style={[
+                          {
+                            backgroundColor: selectedPeriod === SubscriptionPeriod.MONTHLY
+                              ? colors.card : 'transparent',
+                          },
+                          selectedPeriod === SubscriptionPeriod.MONTHLY && Platform.select({
+                            ios: {
+                              shadowColor: '#000',
+                              shadowOffset: { width: 0, height: 1 },
+                              shadowOpacity: 0.1,
+                              shadowRadius: 2,
+                            },
+                            android: {
+                              elevation: 2,
+                            },
+                          }),
+                        ]}
                       >
-                        Monthly
-                      </GaretText>
-                    </Pressable>
-                    <Pressable
-                      onPress={() => handlePeriodToggle(tier.tier, SubscriptionPeriod.YEARLY)}
-                      className="flex-1 py-2 rounded-md"
-                      style={{
-                        backgroundColor: selectedPeriod === SubscriptionPeriod.YEARLY ? colors.card : 'transparent',
-                      }}
-                    >
-                      <View>
                         <GaretText
                           className="text-center text-sm font-semibold"
                           style={{
-                            color: selectedPeriod === SubscriptionPeriod.YEARLY ? colors.foreground : colors.mutedForeground,
+                            color: selectedPeriod === SubscriptionPeriod.MONTHLY
+                              ? colors.foreground : colors.mutedForeground,
+                          }}
+                        >
+                          Monthly
+                        </GaretText>
+                      </Pressable>
+
+                      <Pressable
+                        onPress={() => handlePeriodToggle(tier.tier, SubscriptionPeriod.YEARLY)}
+                        className="flex-1 py-3 rounded-md"
+                        style={[
+                          {
+                            backgroundColor: selectedPeriod === SubscriptionPeriod.YEARLY
+                              ? colors.card : 'transparent',
+                          },
+                          selectedPeriod === SubscriptionPeriod.YEARLY && Platform.select({
+                            ios: {
+                              shadowColor: '#000',
+                              shadowOffset: { width: 0, height: 1 },
+                              shadowOpacity: 0.1,
+                              shadowRadius: 2,
+                            },
+                            android: {
+                              elevation: 2,
+                            },
+                          }),
+                        ]}
+                      >
+                        <GaretText
+                          className="text-center text-sm font-semibold"
+                          style={{
+                            color: selectedPeriod === SubscriptionPeriod.YEARLY
+                              ? colors.foreground : colors.mutedForeground,
                           }}
                         >
                           Yearly
                         </GaretText>
-                        {selectedPeriod === SubscriptionPeriod.YEARLY && (
-                          <GaretText className="text-center text-xs" style={{ color: '#A68BF7' }}>
-                            Best value
-                          </GaretText>
-                        )}
-                      </View>
-                    </Pressable>
+                      </Pressable>
+                    </View>
                   </View>
                 )}
 
                 {/* Price */}
-                {tier.tier !== SubscriptionTier.FREE && price && (
-                  <GaretText className="text-3xl font-bold mb-2" style={{ color: colors.foreground }}>
-                    ${price}
-                    <GaretText className="text-lg" style={{ color: colors.mutedForeground }}>
-                      {selectedPeriod === SubscriptionPeriod.YEARLY ? ' / year' : ' / month'}
-                    </GaretText>
-                  </GaretText>
+                {tier.tier !== SubscriptionTier.FREE && price && tier.monthlyPrice && tier.yearlyPrice && (
+                  <View className="mb-4">
+                    <View className="flex-row items-baseline">
+                      <GaretText className="text-4xl font-bold" style={{ color: colors.foreground }}>
+                        ${price}
+                      </GaretText>
+                      <GaretText className="text-lg ml-1" style={{ color: colors.mutedForeground }}>
+                        {selectedPeriod === SubscriptionPeriod.YEARLY ? '/year' : '/month'}
+                      </GaretText>
+                    </View>
+                    {selectedPeriod === SubscriptionPeriod.YEARLY && (
+                      <View className="flex-row items-center mt-1">
+                        <View
+                          className="px-2 py-1 rounded"
+                          style={{ backgroundColor: '#10b981' }}
+                        >
+                          <GaretText className="text-white text-xs font-semibold">
+                            Save {calculateSavings(tier.monthlyPrice, tier.yearlyPrice)}%
+                          </GaretText>
+                        </View>
+                        <GaretText className="text-sm ml-2" style={{ color: colors.mutedForeground }}>
+                          ${(tier.monthlyPrice * 12 - tier.yearlyPrice).toFixed(2)} vs monthly
+                        </GaretText>
+                      </View>
+                    )}
+                  </View>
                 )}
 
-                {/* Value statement */}
-                <GaretText className="text-base mb-4" style={{ color: colors.mutedForeground }}>
-                  {tier.valueStatement}
-                </GaretText>
-
-                {/* Features */}
-                {tier.features.map((feature, index) => (
-                  <View key={index} className="flex-row items-center mb-2">
-                    <GaretText className="mr-2" style={{ color: '#A68BF7' }}>✓</GaretText>
-                    <GaretText className="text-base" style={{ color: colors.foreground }}>
-                      {feature}
+                {tier.tier === SubscriptionTier.FREE && (
+                  <View className="mb-4">
+                    <GaretText className="text-4xl font-bold" style={{ color: colors.foreground }}>
+                      Free
                     </GaretText>
                   </View>
-                ))}
+                )}
+
+                {/* Features */}
+                <View className="mb-4">
+                  {tier.features.map((feature, index) => (
+                    <View key={index} className="flex-row items-start mb-2">
+                      <View
+                        className="mt-1 mr-2"
+                        style={{
+                          width: 16,
+                          height: 16,
+                          borderRadius: 8,
+                          backgroundColor: '#A68BF7',
+                          alignItems: 'center',
+                          justifyContent: 'center'
+                        }}
+                      >
+                        <GaretText className="text-white text-xs font-bold">✓</GaretText>
+                      </View>
+                      <GaretText className="text-base flex-1" style={{ color: colors.foreground }}>
+                        {feature}
+                      </GaretText>
+                    </View>
+                  ))}
+                </View>
 
                 {/* CTA button */}
-                <View className="mt-4">
+                <View>
                   {tier.tier === SubscriptionTier.FREE ? (
-                    <Button variant="outline" onPress={() => navigation.goBack()}>
-                      <GaretText className="font-semibold">Start singing</GaretText>
+                    <Button variant="default" onPress={() => navigation.goBack()}>
+                      <GaretText className="font-semibold" style={{ color: colors.primaryForeground }}>
+                        Start singing
+                      </GaretText>
                     </Button>
                   ) : selectedPeriod ? (
                     <BuyButton

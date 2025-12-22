@@ -53,19 +53,6 @@ export const TIER_PRICES = {
 
 export const PRICING_TIERS: PricingTier[] = [
   {
-    tier: SubscriptionTier.FREE,
-    name: 'Free',
-    emoji: '🆓',
-    memberLimit: 3,
-    valueStatement: 'Perfect for trying it out',
-    features: [
-      'Up to 3 people',
-      'Host controls lyrics',
-      'Real-time sync',
-      'No account required'
-    ]
-  },
-  {
     tier: SubscriptionTier.PLUS,
     name: 'Plus',
     emoji: '🎶',
@@ -94,6 +81,19 @@ export const PRICING_TIERS: PricingTier[] = [
       'Faster sync for bigger groups',
       'Designed for group events',
       'One host, zero confusion'
+    ]
+  },
+  {
+    tier: SubscriptionTier.FREE,
+    name: 'Free',
+    emoji: '🆓',
+    memberLimit: 3,
+    valueStatement: 'Perfect for trying it out',
+    features: [
+      'Up to 3 people',
+      'Host controls lyrics',
+      'Real-time sync',
+      'No account required'
     ]
   }
 ]

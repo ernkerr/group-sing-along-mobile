@@ -104,7 +104,9 @@ export default function GroupScreen() {
 
   // Limit modal state
   const [showLimitModal, setShowLimitModal] = useState(false);
-  const [limitModalType, setLimitModalType] = useState<'host' | 'singer'>('host');
+  const [limitModalType, setLimitModalType] = useState<"host" | "singer">(
+    "host"
+  );
 
   // Subscription state
   const { tier, memberLimit, canInviteMore } = useSubscription();
@@ -153,23 +155,37 @@ export default function GroupScreen() {
 
   const handleNewUserJoined = useCallback(async () => {
     console.log("Host received new-user-joined event");
-    if (isHost && lyrics && currentSong) {
+    if (isHost) {
       try {
+        // Broadcast current lyrics
+        if (lyrics && currentSong) {
+          await api.triggerPusherEvent(
+            `group-lyrics-${groupId}`,
+            "lyric-update",
+            {
+              title: currentSong,
+              artist: currentArtist,
+              lyrics: lyrics,
+              albumCover,
+            }
+          );
+        }
+
+        // Also broadcast room capacity info
         await api.triggerPusherEvent(
           `group-lyrics-${groupId}`,
-          "lyric-update",
+          "room-info",
           {
-            title: currentSong,
-            artist: currentArtist,
-            lyrics: lyrics,
-            albumCover,
+            hostTier: tier,
+            memberLimit: memberLimit,
+            currentCount: memberCount,
           }
         );
       } catch (error) {
-        console.error("Error re-broadcasting lyrics:", error);
+        console.error("Error re-broadcasting info:", error);
       }
     }
-  }, [isHost, lyrics, currentSong, currentArtist, albumCover, groupId]);
+  }, [isHost, lyrics, currentSong, currentArtist, albumCover, groupId, tier, memberLimit, memberCount]);
 
   const handleSubscriptionSucceeded = useCallback(async () => {
     // When a new user joins, request current lyrics
@@ -270,6 +286,35 @@ export default function GroupScreen() {
     [isHost]
   );
 
+  // Handle room info - kick user if room is at capacity
+  const handleRoomInfo = useCallback(
+    (data: { hostTier: string; memberLimit: number; currentCount: number }) => {
+      // Only applies to singers (non-hosts)
+      if (!isHost) {
+        const { memberLimit: limit, currentCount } = data;
+
+        // If room is at or over capacity, we're the one who pushed it over
+        if (currentCount >= limit) {
+          Alert.alert(
+            "Room Full",
+            `This group has reached its ${limit}-member capacity. Ask the host to upgrade to allow more members.`,
+            [
+              {
+                text: "OK",
+                onPress: async () => {
+                  await storage.clearAll();
+                  navigation.goBack();
+                },
+              },
+            ],
+            { cancelable: false }
+          );
+        }
+      }
+    },
+    [isHost, navigation]
+  );
+
   // Initialize Pusher connection
   usePusher(groupId, {
     onLyricUpdate: handleLyricUpdate,
@@ -278,6 +323,7 @@ export default function GroupScreen() {
     onSubscriptionSucceeded: handleSubscriptionSucceeded,
     onHostDisconnect: handleHostDisconnectReceived,
     onSongRequest: handleSongRequest,
+    onRoomInfo: handleRoomInfo,
   });
 
   // Real-time member limit enforcement
@@ -287,7 +333,7 @@ export default function GroupScreen() {
     if (memberCount > memberLimit && memberCount > 0) {
       if (isHost) {
         // Show modal to host
-        setLimitModalType('host');
+        setLimitModalType("host");
         setShowLimitModal(true);
       }
       // Note: We don't auto-kick singers - they can stay if they were already in
@@ -526,11 +572,11 @@ export default function GroupScreen() {
                 <GaretText className="text-white text-md font-bold shadow-lg">
                   {memberCount} {memberCount === 1 ? "member" : "members"}
                 </GaretText>
-                {isHost && (
+                {/* {isHost && (
                   <GaretText className="text-white text-xs opacity-80 ml-1">
                     (tap to invite)
                   </GaretText>
-                )}
+                )} */}
               </Pressable>
             </View>
           </LinearGradient>
@@ -917,7 +963,7 @@ export default function GroupScreen() {
           >
             <Share2 size={16} color="white" />
             <GaretText className="text-white font-semibold">
-              {isHost ? 'Share' : 'Ask host to share'}
+              {isHost ? "Share" : "Ask host to share"}
             </GaretText>
           </Pressable>
 
@@ -945,7 +991,7 @@ export default function GroupScreen() {
         visible={isPaywallVisible}
         onClose={() => setIsPaywallVisible(false)}
         currentMemberCount={memberCount}
-        userRole={isHost ? 'host' : 'singer'}
+        userRole={isHost ? "host" : "singer"}
       />
 
       {/* Member Limit Modal */}
@@ -961,31 +1007,41 @@ export default function GroupScreen() {
             style={{ backgroundColor: colors.card }}
             onPress={(e) => e.stopPropagation()}
           >
-            <RocaText className="text-xl font-semibold mb-4" style={{ color: colors.foreground }}>
-              {limitModalType === 'host' ? 'Member Limit Reached' : 'Room Full'}
+            <RocaText
+              className="text-xl font-semibold mb-4"
+              style={{ color: colors.foreground }}
+            >
+              {limitModalType === "host" ? "Member Limit Reached" : "Room Full"}
             </RocaText>
-            <GaretText className="text-base mb-6" style={{ color: colors.mutedForeground }}>
-              {limitModalType === 'host'
+            <GaretText
+              className="text-base mb-6"
+              style={{ color: colors.mutedForeground }}
+            >
+              {limitModalType === "host"
                 ? `Your ${tier} plan supports up to ${memberLimit} members. Upgrade to allow more.`
-                : 'This room has reached its member limit. Ask the host to upgrade.'}
+                : "This room has reached its member limit. Ask the host to upgrade."}
             </GaretText>
-            {limitModalType === 'host' ? (
+            {limitModalType === "host" ? (
               <View className="flex-row gap-2">
                 <Pressable
                   onPress={() => {
                     setShowLimitModal(false);
-                    navigation.navigate('Pricing' as never);
+                    navigation.navigate("Pricing" as never);
                   }}
                   className="flex-1 bg-violet-400 py-3 rounded-lg items-center active:bg-violet-500"
                 >
-                  <GaretText className="text-white font-semibold">Upgrade</GaretText>
+                  <GaretText className="text-white font-semibold">
+                    Upgrade
+                  </GaretText>
                 </Pressable>
                 <Pressable
                   onPress={() => setShowLimitModal(false)}
                   className="flex-1 py-3 rounded-lg items-center"
                   style={{ borderWidth: 1, borderColor: colors.border }}
                 >
-                  <GaretText style={{ color: colors.foreground }}>Dismiss</GaretText>
+                  <GaretText style={{ color: colors.foreground }}>
+                    Dismiss
+                  </GaretText>
                 </Pressable>
               </View>
             ) : (

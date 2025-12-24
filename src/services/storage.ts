@@ -1,5 +1,14 @@
 import AsyncStorage from '@react-native-async-storage/async-storage'
-import { SubscriptionTier, SubscriptionPeriod } from '@/types/subscription'
+import { SubscriptionTier, SubscriptionPeriod, SessionInfo } from '@/types/subscription'
+
+// Helper function to generate unique device ID
+const generateUniqueId = (): string => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+    const r = Math.random() * 16 | 0
+    const v = c === 'x' ? r : (r & 0x3 | 0x8)
+    return v.toString(16)
+  })
+}
 
 const KEYS = {
   IS_HOST: 'isHost',
@@ -7,6 +16,8 @@ const KEYS = {
   SUBSCRIPTION_TIER: 'subscriptionTier',
   SUBSCRIPTION_PERIOD: 'subscriptionPeriod',
   SUBSCRIPTION_EXPIRY: 'subscriptionExpiry',
+  SESSION_INFO: 'sessionInfo',
+  DEVICE_ID: 'deviceId',
 }
 
 export const storage = {
@@ -118,7 +129,41 @@ export const storage = {
     }
   },
 
-  // Clear all
+  // Session info
+  getSessionInfo: async (): Promise<SessionInfo | null> => {
+    try {
+      const value = await AsyncStorage.getItem(KEYS.SESSION_INFO)
+      return value ? JSON.parse(value) : null
+    } catch (error) {
+      console.error('Error reading session info:', error)
+      return null
+    }
+  },
+
+  setSessionInfo: async (info: SessionInfo): Promise<void> => {
+    try {
+      await AsyncStorage.setItem(KEYS.SESSION_INFO, JSON.stringify(info))
+    } catch (error) {
+      console.error('Error saving session info:', error)
+    }
+  },
+
+  // Device ID (for unique identification)
+  getDeviceId: async (): Promise<string> => {
+    try {
+      let deviceId = await AsyncStorage.getItem(KEYS.DEVICE_ID)
+      if (!deviceId) {
+        deviceId = generateUniqueId()
+        await AsyncStorage.setItem(KEYS.DEVICE_ID, deviceId)
+      }
+      return deviceId
+    } catch (error) {
+      console.error('Error getting device ID:', error)
+      return generateUniqueId()
+    }
+  },
+
+  // Clear all (including new session info, but NOT device ID)
   clearAll: async (): Promise<void> => {
     try {
       await AsyncStorage.multiRemove([
@@ -127,6 +172,8 @@ export const storage = {
         KEYS.SUBSCRIPTION_TIER,
         KEYS.SUBSCRIPTION_PERIOD,
         KEYS.SUBSCRIPTION_EXPIRY,
+        KEYS.SESSION_INFO,
+        // Note: We keep DEVICE_ID persistent across sessions
       ])
     } catch (error) {
       console.error('Error clearing AsyncStorage:', error)

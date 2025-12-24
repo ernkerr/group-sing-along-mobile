@@ -37,6 +37,7 @@ import { useSubscription } from "@/hooks/useSubscription";
 import { api } from "@/services/api";
 import type { RootStackParamList } from "@/types";
 import { useTheme } from "@/context/ThemeContext";
+import { SubscriptionTier } from "@/types/subscription";
 
 import iconDark from "../assets/iconDark.png";
 
@@ -111,9 +112,25 @@ export default function GroupScreen() {
   // Subscription state
   const { tier, memberLimit, canInviteMore } = useSubscription();
 
+  // Session expiry state (for EVENT tier 24-hour timer)
+  const [sessionExpiresAt, setSessionExpiresAt] = useState<string | null>(null);
+  const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
+
   useEffect(() => {
     loadRole();
+    loadSessionInfo();
   }, []);
+
+  const loadSessionInfo = async () => {
+    try {
+      const sessionInfo = await storage.getSessionInfo();
+      if (sessionInfo?.expiresAt) {
+        setSessionExpiresAt(sessionInfo.expiresAt);
+      }
+    } catch (error) {
+      console.error("Error loading session info:", error);
+    }
+  };
 
   const loadRole = async () => {
     try {
@@ -170,26 +187,15 @@ export default function GroupScreen() {
             }
           );
         }
-
-        // Also broadcast room capacity info
-        await api.triggerPusherEvent(
-          `group-lyrics-${groupId}`,
-          "room-info",
-          {
-            hostTier: tier,
-            memberLimit: memberLimit,
-            currentCount: memberCount,
-          }
-        );
       } catch (error) {
         console.error("Error re-broadcasting info:", error);
       }
     }
-  }, [isHost, lyrics, currentSong, currentArtist, albumCover, groupId, tier, memberLimit, memberCount]);
+  }, [isHost, lyrics, currentSong, currentArtist, albumCover, groupId]);
 
   const handleSubscriptionSucceeded = useCallback(async () => {
-    // When a new user joins, request current lyrics
     if (!isHost) {
+      // Singer: request current lyrics from host
       console.log("New user subscription succeeded, requesting lyrics");
       try {
         await api.triggerPusherEvent(
@@ -204,6 +210,36 @@ export default function GroupScreen() {
       }
     }
   }, [isHost, groupId]);
+
+  // Paywall enforcement: kick singers if they join a full room
+  useEffect(() => {
+    // Only check for singers (not hosts) and only if we have a valid member count
+    if (!isHost && memberCount > memberLimit && memberCount > 0) {
+      console.log(`Room is full: ${memberCount}/${memberLimit} - kicking user`);
+
+      // Immediately navigate back and clear storage
+      const kickUser = async () => {
+        await storage.clearAll();
+        navigation.goBack();
+      };
+
+      // Show alert and kick regardless of user action
+      Alert.alert(
+        "Room Full",
+        `This group has reached its ${memberLimit}-member capacity. Ask the host to upgrade to allow more members.`,
+        [
+          {
+            text: "OK",
+            onPress: kickUser,
+          },
+        ],
+        { cancelable: false, onDismiss: kickUser }
+      );
+
+      // Also kick immediately after 1 second if alert somehow doesn't work
+      setTimeout(kickUser, 1000);
+    }
+  }, [memberCount, memberLimit, isHost, navigation]);
 
   // Handle host disconnect - notify all members
   const handleHostDisconnect = useCallback(async () => {
@@ -286,34 +322,55 @@ export default function GroupScreen() {
     [isHost]
   );
 
-  // Handle room info - kick user if room is at capacity
-  const handleRoomInfo = useCallback(
-    (data: { hostTier: string; memberLimit: number; currentCount: number }) => {
-      // Only applies to singers (non-hosts)
-      if (!isHost) {
-        const { memberLimit: limit, currentCount } = data;
 
-        // If room is at or over capacity, we're the one who pushed it over
-        if (currentCount >= limit) {
-          Alert.alert(
-            "Room Full",
-            `This group has reached its ${limit}-member capacity. Ask the host to upgrade to allow more members.`,
-            [
-              {
-                text: "OK",
-                onPress: async () => {
-                  await storage.clearAll();
-                  navigation.goBack();
-                },
-              },
-            ],
-            { cancelable: false }
+  // Handle session expired event
+  const handleSessionExpiredReceived = useCallback(() => {
+    Alert.alert(
+      "Session Expired",
+      "This 24-hour session has ended.",
+      [
+        {
+          text: "OK",
+          onPress: async () => {
+            await storage.clearAll();
+            navigation.goBack();
+          },
+        },
+      ],
+      { cancelable: false }
+    );
+  }, [navigation]);
+
+  // Timer countdown for EVENT tier (hosts only)
+  useEffect(() => {
+    if (!sessionExpiresAt || !isHost || tier !== SubscriptionTier.EVENT) return;
+
+    const interval = setInterval(async () => {
+      const now = new Date();
+      const expiry = new Date(sessionExpiresAt);
+      const remaining = Math.floor((expiry.getTime() - now.getTime()) / 1000);
+
+      if (remaining <= 0) {
+        clearInterval(interval);
+        // Broadcast session-expired event to all members
+        try {
+          await api.triggerPusherEvent(
+            `group-lyrics-${groupId}`,
+            "session-expired",
+            { message: "24-hour session has ended" }
           );
+        } catch (error) {
+          console.error("Error broadcasting session expiry:", error);
         }
+        // Show expiry alert
+        handleSessionExpiredReceived();
+      } else {
+        setTimeRemaining(remaining);
       }
-    },
-    [isHost, navigation]
-  );
+    }, 1000);
+
+    return () => clearInterval(interval);
+  }, [sessionExpiresAt, isHost, tier, groupId, handleSessionExpiredReceived]);
 
   // Initialize Pusher connection
   usePusher(groupId, {
@@ -323,7 +380,7 @@ export default function GroupScreen() {
     onSubscriptionSucceeded: handleSubscriptionSucceeded,
     onHostDisconnect: handleHostDisconnectReceived,
     onSongRequest: handleSongRequest,
-    onRoomInfo: handleRoomInfo,
+    onSessionExpired: handleSessionExpiredReceived,
   });
 
   // Real-time member limit enforcement
@@ -372,6 +429,14 @@ export default function GroupScreen() {
 
   const increaseFontSize = () => setFontSize((prev) => Math.min(prev + 2, 32));
   const decreaseFontSize = () => setFontSize((prev) => Math.max(prev - 2, 10));
+
+  // Format time remaining (seconds) to HH:MM:SS
+  const formatTimeRemaining = (seconds: number): string => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const secs = seconds % 60;
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+  };
 
   // Search for songs (Deezer) - Host
   const handleSearch = async () => {
@@ -607,6 +672,21 @@ export default function GroupScreen() {
               <GaretText className="font-semibold">{groupId}</GaretText>
             </GaretText>
           </View>
+
+          {/* EVENT Tier Timer Display */}
+          {tier === SubscriptionTier.EVENT && timeRemaining !== null && (
+            <View
+              className="mx-6 mt-4 px-4 py-3 rounded-lg border"
+              style={{
+                backgroundColor: "#fef3c7",
+                borderColor: "#f59e0b",
+              }}
+            >
+              <GaretText className="text-sm font-semibold text-center text-amber-800">
+                ⏱️ Session expires in: {formatTimeRemaining(timeRemaining)}
+              </GaretText>
+            </View>
+          )}
 
           {/* Singer Search Section */}
           {!isHost && (

@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { View, ScrollView, Modal, Pressable } from "react-native";
+import { View, ScrollView, Modal, Pressable, Alert } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
@@ -11,6 +11,7 @@ import { generateGroupCode } from "@/utils/generateCode";
 import { storage } from "@/services/storage";
 import type { RootStackParamList } from "@/types";
 import { useTheme } from "@/context/ThemeContext";
+import { SubscriptionTier, TIER_LIMITS } from "@/types/subscription";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, "Landing">;
 
@@ -26,11 +27,32 @@ export default function LandingScreen() {
     setIsCreating(true);
     try {
       const groupId = generateGroupCode();
+      const tier = await storage.getSubscriptionTier();
+
+      // Create session info locally (client-side)
+      const createdAt = new Date().toISOString();
+      const sessionInfo = {
+        hostTier: tier,
+        memberLimit: TIER_LIMITS[tier],
+        currentCount: 1,
+        createdAt,
+        expiresAt: tier === SubscriptionTier.EVENT
+          ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+          : undefined
+      };
+
+      // Store session info and host status
       await storage.setIsHost(true);
       await storage.setGroupId(groupId);
+      await storage.setSessionInfo(sessionInfo);
+
       navigation.navigate("Group", { id: groupId });
     } catch (error) {
       console.error("Error creating group:", error);
+      Alert.alert(
+        'Error',
+        'Failed to create group. Please try again.'
+      );
     } finally {
       setIsCreating(false);
     }
@@ -44,11 +66,20 @@ export default function LandingScreen() {
     setIsJoining(true);
     try {
       const groupId = joinCode.toUpperCase();
+
+      // Store group info and navigate
       await storage.setIsHost(false);
       await storage.setGroupId(groupId);
+
+      setShowJoinInput(false);
+      setJoinCode("");
       navigation.navigate("Group", { id: groupId });
     } catch (error) {
       console.error("Error joining group:", error);
+      Alert.alert(
+        'Error',
+        'Failed to join group. Please try again.'
+      );
     } finally {
       setIsJoining(false);
     }

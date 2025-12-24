@@ -235,14 +235,6 @@ export default function PricingScreen() {
                   </View>
                 )}
 
-                {tier.tier === SubscriptionTier.FREE && (
-                  <View className="mb-4">
-                    <GaretText className="text-4xl font-bold" style={{ color: colors.foreground }}>
-                      Free
-                    </GaretText>
-                  </View>
-                )}
-
                 {/* Features */}
                 <View className="mb-4">
                   {tier.features.map((feature, index) => (
@@ -270,10 +262,8 @@ export default function PricingScreen() {
                 {/* CTA button */}
                 <View>
                   {tier.tier === SubscriptionTier.FREE ? (
-                    <Button variant="default" onPress={() => navigation.goBack()}>
-                      <GaretText className="font-semibold" style={{ color: colors.primaryForeground }}>
-                        Start singing
-                      </GaretText>
+                    <Button variant="gradient" size="lg" onPress={() => navigation.goBack()}>
+                      Start singing
                     </Button>
                   ) : selectedPeriod ? (
                     <BuyButton

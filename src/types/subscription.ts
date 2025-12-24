@@ -18,6 +18,14 @@ export interface SubscriptionStatus {
   isActive: boolean
 }
 
+export interface SessionInfo {
+  hostTier: SubscriptionTier
+  memberLimit: number
+  currentCount: number
+  expiresAt?: string  // ISO date string (for EVENT tier)
+  createdAt: string   // ISO date string
+}
+
 export interface PricingTier {
   tier: SubscriptionTier
   name: string
@@ -31,23 +39,42 @@ export interface PricingTier {
 }
 
 export const TIER_LIMITS: Record<SubscriptionTier, number> = {
-  [SubscriptionTier.FREE]: 3,
-  [SubscriptionTier.PLUS]: 10,
-  [SubscriptionTier.PARTY]: 25,
-  [SubscriptionTier.EVENT]: 25
+  [SubscriptionTier.FREE]: parseInt(process.env.EXPO_PUBLIC_FREE_LIMIT || '3'),
+  [SubscriptionTier.PLUS]: parseInt(process.env.EXPO_PUBLIC_PLUS_LIMIT || '10'),
+  [SubscriptionTier.PARTY]: parseInt(process.env.EXPO_PUBLIC_PARTY_LIMIT || '25'),
+  [SubscriptionTier.EVENT]: parseInt(process.env.EXPO_PUBLIC_EVENT_LIMIT || '25')
 }
+
+export const EVENT_DURATION_HOURS = parseInt(
+  process.env.EXPO_PUBLIC_EVENT_DURATION_HOURS || '24'
+)
 
 export const TIER_PRICES = {
   [SubscriptionTier.PLUS]: {
-    monthly: { price: 1.99, sku: 'groupsingalong_plus_ios_monthly' },
-    yearly: { price: 20, sku: 'groupsingalong_plus_ios_yearly' }
+    monthly: {
+      price: parseFloat(process.env.EXPO_PUBLIC_PLUS_MONTHLY_PRICE || '1.99'),
+      sku: 'groupsingalong_plus_ios_monthly'
+    },
+    yearly: {
+      price: parseFloat(process.env.EXPO_PUBLIC_PLUS_YEARLY_PRICE || '20'),
+      sku: 'groupsingalong_plus_ios_yearly'
+    }
   },
   [SubscriptionTier.PARTY]: {
-    monthly: { price: 5.99, sku: 'groupsingalong_party_ios_monthly' },
-    yearly: { price: 60, sku: 'groupsingalong_party_ios_yearly' }
+    monthly: {
+      price: parseFloat(process.env.EXPO_PUBLIC_PARTY_MONTHLY_PRICE || '5.99'),
+      sku: 'groupsingalong_party_ios_monthly'
+    },
+    yearly: {
+      price: parseFloat(process.env.EXPO_PUBLIC_PARTY_YEARLY_PRICE || '60'),
+      sku: 'groupsingalong_party_ios_yearly'
+    }
   },
   [SubscriptionTier.EVENT]: {
-    once: { price: 3.99, sku: 'groupsingalong_event_ios_24h' }
+    once: {
+      price: parseFloat(process.env.EXPO_PUBLIC_EVENT_PRICE || '3.99'),
+      sku: 'groupsingalong_event_ios_24h'
+    }
   }
 }
 
@@ -56,12 +83,12 @@ export const PRICING_TIERS: PricingTier[] = [
     tier: SubscriptionTier.PLUS,
     name: 'Plus',
     emoji: '🎶',
-    memberLimit: 10,
-    monthlyPrice: 1.99,
-    yearlyPrice: 20,
+    memberLimit: TIER_LIMITS[SubscriptionTier.PLUS],
+    monthlyPrice: TIER_PRICES[SubscriptionTier.PLUS].monthly.price,
+    yearlyPrice: TIER_PRICES[SubscriptionTier.PLUS].yearly.price,
     valueStatement: 'For small groups who want it to just work.',
     features: [
-      'Up to 10 people',
+      `Up to ${TIER_LIMITS[SubscriptionTier.PLUS]} people`,
       'Unlimited songs',
       'Everyone stays on the same line',
       'Cancel anytime'
@@ -72,12 +99,12 @@ export const PRICING_TIERS: PricingTier[] = [
     tier: SubscriptionTier.PARTY,
     name: 'Party',
     emoji: '🎉',
-    memberLimit: 25,
-    monthlyPrice: 5.99,
-    yearlyPrice: 60,
+    memberLimit: TIER_LIMITS[SubscriptionTier.PARTY],
+    monthlyPrice: TIER_PRICES[SubscriptionTier.PARTY].monthly.price,
+    yearlyPrice: TIER_PRICES[SubscriptionTier.PARTY].yearly.price,
     valueStatement: 'For holidays, parties, and family gatherings.',
     features: [
-      'Up to 25 people',
+      `Up to ${TIER_LIMITS[SubscriptionTier.PARTY]} people`,
       'Faster sync for bigger groups',
       'Designed for group events',
       'One host, zero confusion'
@@ -87,10 +114,10 @@ export const PRICING_TIERS: PricingTier[] = [
     tier: SubscriptionTier.FREE,
     name: 'Free',
     emoji: '🆓',
-    memberLimit: 3,
+    memberLimit: TIER_LIMITS[SubscriptionTier.FREE],
     valueStatement: 'Perfect for trying it out',
     features: [
-      'Up to 3 people',
+      `Up to ${TIER_LIMITS[SubscriptionTier.FREE]} people`,
       'Host controls lyrics',
       'Real-time sync',
       'No account required'

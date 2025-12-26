@@ -12,6 +12,7 @@ import { storage } from "@/services/storage";
 import type { RootStackParamList } from "@/types";
 import { useTheme } from "@/context/ThemeContext";
 import { SubscriptionTier, TIER_LIMITS } from "@/types/subscription";
+import { api } from "@/services/api";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, "Landing">;
 
@@ -41,10 +42,17 @@ export default function LandingScreen() {
           : undefined
       };
 
-      // Store session info and host status
+      // Store session info locally
       await storage.setIsHost(true);
       await storage.setGroupId(groupId);
       await storage.setSessionInfo(sessionInfo);
+
+      // Send tier limit to backend (for capacity checking)
+      try {
+        await api.checkCapacity(groupId, sessionInfo.memberLimit);
+      } catch (error) {
+        console.log('Failed to register session with backend, continuing anyway');
+      }
 
       navigation.navigate("Group", { id: groupId });
     } catch (error) {
@@ -67,7 +75,20 @@ export default function LandingScreen() {
     try {
       const groupId = joinCode.toUpperCase();
 
-      // Store group info and navigate
+      // Check capacity before joining (backend will use stored limit from host)
+      // We pass 3 (FREE tier) as default - backend will use host's actual limit if stored
+      const capacityCheck = await api.checkCapacity(groupId, 3);
+
+      if (!capacityCheck.canJoin) {
+        Alert.alert(
+          'Room Full',
+          capacityCheck.message || `This group has reached its ${capacityCheck.memberLimit}-member capacity.`,
+          [{ text: 'OK' }]
+        );
+        return;
+      }
+
+      // Capacity check passed, proceed to join
       await storage.setIsHost(false);
       await storage.setGroupId(groupId);
 
@@ -78,7 +99,7 @@ export default function LandingScreen() {
       console.error("Error joining group:", error);
       Alert.alert(
         'Error',
-        'Failed to join group. Please try again.'
+        'Failed to check room capacity. Please try again.'
       );
     } finally {
       setIsJoining(false);

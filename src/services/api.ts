@@ -17,6 +17,13 @@ interface LyricsResponse {
   lyrics: string
 }
 
+interface CapacityResponse {
+  canJoin: boolean
+  currentCount: number
+  memberLimit: number
+  message?: string
+}
+
 /**
  * API service for communicating with the Next.js backend
  */
@@ -181,7 +188,34 @@ export const api = {
 
     throw new Error('Lyrics not found - no service could find this song')
   },
+
+  /**
+   * Check if a group has capacity for new members
+   * Calls: GET /api/check-capacity/:groupId?limit=X
+   */
+  checkCapacity: async (groupId: string, memberLimit: number): Promise<CapacityResponse> => {
+    try {
+      const response = await fetch(
+        `${API_BASE_URL}/api/check-capacity/${groupId}?limit=${memberLimit}`,
+        {
+          method: 'GET',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      )
+
+      if (!response.ok) {
+        throw new Error(`API error: ${response.status}`)
+      }
+
+      return await response.json()
+    } catch (error) {
+      console.error('Error checking capacity:', error)
+      throw error
+    }
+  },
 }
 
 // Export types for use in components
-export type { DeezerTrack, LyricsResponse }
+export type { DeezerTrack, LyricsResponse, CapacityResponse }

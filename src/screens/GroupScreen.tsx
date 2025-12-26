@@ -213,12 +213,16 @@ export default function GroupScreen() {
 
   // Paywall enforcement: kick singers if they join a full room
   useEffect(() => {
+    // Debug logging
+    console.log(`[PAYWALL CHECK] isHost: ${isHost}, memberCount: ${memberCount}, memberLimit: ${memberLimit}, tier: ${tier}`);
+
     // Only check for singers (not hosts) and only if we have a valid member count
     if (!isHost && memberCount > memberLimit && memberCount > 0) {
-      console.log(`Room is full: ${memberCount}/${memberLimit} - kicking user`);
+      console.log(`🚫 Room is full: ${memberCount}/${memberLimit} - KICKING USER`);
 
       // Immediately navigate back and clear storage
       const kickUser = async () => {
+        console.log('Executing kickUser - clearing storage and going back');
         await storage.clearAll();
         navigation.goBack();
       };
@@ -238,8 +242,10 @@ export default function GroupScreen() {
 
       // Also kick immediately after 1 second if alert somehow doesn't work
       setTimeout(kickUser, 1000);
+    } else {
+      console.log(`[PAYWALL CHECK] Not kicking - condition not met`);
     }
-  }, [memberCount, memberLimit, isHost, navigation]);
+  }, [memberCount, memberLimit, isHost, tier, navigation]);
 
   // Handle host disconnect - notify all members
   const handleHostDisconnect = useCallback(async () => {

@@ -5,7 +5,7 @@ import {
   View,
   Platform,
 } from "react-native";
-import { LinearGradient } from "expo-linear-gradient";
+import LinearGradient from "react-native-linear-gradient";
 import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/utils/cn";
 import { useTheme } from "@/context/ThemeContext";

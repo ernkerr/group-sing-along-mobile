@@ -1,6 +1,5 @@
 import React from 'react'
 import { View, Modal, Pressable, Share, Platform, ImageBackground, Image } from 'react-native'
-import { LinearGradient } from 'expo-linear-gradient'
 import QRCode from 'react-native-qrcode-svg'
 import { RocaText, GaretText } from '@/components/ui/Typography'
 import { useTheme } from '@/context/ThemeContext'

@@ -22,9 +22,23 @@ const linking = {
 export default function AppNavigator() {
   return (
     <NavigationContainer linking={linking}>
-      <Stack.Navigator screenOptions={{ headerShown: false }}>
+      <Stack.Navigator screenOptions={{
+        headerShown: false,
+        headerBackVisible: false,
+        headerBackTitleVisible: false,
+        headerLeft: () => null,
+        headerTransparent: true,
+        navigationBarHidden: true,
+      }}>
         <Stack.Screen name="Landing" component={LandingScreen} />
-        <Stack.Screen name="Group" component={GroupScreen} />
+        <Stack.Screen
+          name="Group"
+          component={GroupScreen}
+          options={{
+            headerShown: false,
+            gestureEnabled: false,
+          }}
+        />
         <Stack.Screen name="Pricing" component={PricingScreen} />
       </Stack.Navigator>
     </NavigationContainer>

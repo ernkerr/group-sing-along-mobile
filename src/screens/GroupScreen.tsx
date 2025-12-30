@@ -16,7 +16,7 @@ import {
   useSafeAreaInsets,
 } from "react-native-safe-area-context";
 import { useRoute, RouteProp, useNavigation } from "@react-navigation/native";
-import { LinearGradient } from "expo-linear-gradient";
+import LinearGradient from "react-native-linear-gradient";
 import {
   Search,
   Plus,
@@ -195,7 +195,15 @@ export default function GroupScreen() {
         console.error("Error re-broadcasting info:", error);
       }
     }
-  }, [isHost, lyrics, currentSong, currentArtist, albumCover, groupId, memberLimit]);
+  }, [
+    isHost,
+    lyrics,
+    currentSong,
+    currentArtist,
+    albumCover,
+    groupId,
+    memberLimit,
+  ]);
 
   const handleSubscriptionSucceeded = useCallback(async () => {
     if (!isHost) {
@@ -222,15 +230,19 @@ export default function GroupScreen() {
     const effectiveLimit = isHost ? memberLimit : hostLimit;
 
     // Debug logging
-    console.log(`[PAYWALL CHECK] isHost: ${isHost}, memberCount: ${memberCount}, effectiveLimit: ${effectiveLimit}, hostLimit: ${hostLimit}`);
+    console.log(
+      `[PAYWALL CHECK] isHost: ${isHost}, memberCount: ${memberCount}, effectiveLimit: ${effectiveLimit}, hostLimit: ${hostLimit}`
+    );
 
     // Only check for singers (not hosts) and only if we have a valid member count
     if (!isHost && memberCount > effectiveLimit && memberCount > 0) {
-      console.log(`🚫 Room is full: ${memberCount}/${effectiveLimit} - KICKING USER`);
+      console.log(
+        `🚫 Room is full: ${memberCount}/${effectiveLimit} - KICKING USER`
+      );
 
       // Immediately navigate back and clear storage
       const kickUser = async () => {
-        console.log('Executing kickUser - clearing storage and going back');
+        console.log("Executing kickUser - clearing storage and going back");
         await storage.clearAll();
         navigation.goBack();
       };
@@ -335,7 +347,6 @@ export default function GroupScreen() {
     },
     [isHost]
   );
-
 
   // Handle session expired event
   const handleSessionExpiredReceived = useCallback(() => {
@@ -451,7 +462,9 @@ export default function GroupScreen() {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
     const secs = seconds % 60;
-    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    return `${hours.toString().padStart(2, "0")}:${minutes
+      .toString()
+      .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
   };
 
   // Search for songs (Deezer) - Host
@@ -612,63 +625,87 @@ export default function GroupScreen() {
         <View style={{ backgroundColor: colors.background }}>
           {/* Main Content Container */}
           {/* Header with Gradient Background */}
-          <LinearGradient
-            colors={["#A68BF7", "#C4B4FD"]}
-            start={{ x: 0, y: 0 }}
-            end={{ x: 1, y: 0 }}
-            className="px-6 pb-8"
+          <View
             style={{
-              paddingTop: insets.top + 8,
-              paddingBottom: insets.bottom - 16,
+              width: "100%",
             }}
           >
-            <View className="flex-row items-center justify-between">
-              <View className="flex-row items-center gap-2 ml-2">
-                <Image
-                  source={iconDark}
-                  style={{ width: 25, height: 25 }}
-                  resizeMode="contain"
-                />
-                <RocaText className="text-2xl text-white font-bold">
-                  Group Sing Along
-                </RocaText>
-              </View>
-              <Pressable
-                onPress={handleInvite}
-                disabled={!isHost}
-                className="px-4 py-2 rounded-md flex-row items-center gap-1.5 mr-6"
+            <LinearGradient
+              colors={["#A68BF7", "#C4B4FD"]}
+              start={{ x: 0, y: 0 }}
+              end={{ x: 1, y: 0 }}
+              style={{
+                position: "absolute",
+                left: 0,
+                right: 0,
+                top: 0,
+                height: insets.top + 100,
+              }}
+            />
+            <View
+              style={{
+                paddingHorizontal: 24,
+                paddingTop: insets.top + 8,
+                paddingBottom: 24,
+              }}
+            >
+              <View
                 style={{
-                  borderRadius: 6,
-                  backgroundColor: "#C4B4FD",
-                  ...Platform.select({
-                    ios: {
-                      shadowColor: "#000",
-                      shadowOffset: { width: 0, height: 2 },
-                      shadowOpacity: 0.15,
-                      shadowRadius: 3,
-                    },
-                  }),
+                  flexDirection: "row",
+                  alignItems: "center",
+                  justifyContent: "space-between",
                 }}
               >
-                <Users size={16} color="white" />
-                <GaretText className="text-white text-md font-bold shadow-lg">
-                  {memberCount} {memberCount === 1 ? "member" : "members"}
-                </GaretText>
-                {/* {isHost && (
-                  <GaretText className="text-white text-xs opacity-80 ml-1">
-                    (tap to invite)
+                <View
+                  style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
+                >
+                  <Image
+                    source={iconDark}
+                    style={{ width: 25, height: 25 }}
+                    resizeMode="contain"
+                  />
+                  <RocaText
+                    style={{ fontSize: 24, color: "white", fontWeight: "bold" }}
+                  >
+                    Group Sing Along
+                  </RocaText>
+                </View>
+                <Pressable
+                  onPress={handleInvite}
+                  disabled={!isHost}
+                  style={{
+                    flexDirection: "row",
+                    alignItems: "center",
+                    gap: 6,
+                    paddingHorizontal: 16,
+                    paddingVertical: 8,
+                    borderRadius: 6,
+                    backgroundColor: "#C4B4FD",
+                    ...Platform.select({
+                      ios: {
+                        shadowColor: "#000",
+                        shadowOffset: { width: 0, height: 2 },
+                        shadowOpacity: 0.15,
+                        shadowRadius: 3,
+                      },
+                    }),
+                  }}
+                >
+                  <Users size={16} color="white" />
+                  <GaretText
+                    style={{ color: "white", fontSize: 14, fontWeight: "bold" }}
+                  >
+                    {memberCount} {memberCount === 1 ? "member" : "members"}
                   </GaretText>
-                )} */}
-              </Pressable>
+                </Pressable>
+              </View>
             </View>
-          </LinearGradient>
+          </View>
 
           {/* Info Rows */}
           <View
             className="px-6 py-4 flex-row items-center justify-between"
             style={{
-              borderTopLeftRadius: 20,
-              borderTopRightRadius: 20,
               backgroundColor: colors.card,
             }}
           >
@@ -734,7 +771,7 @@ export default function GroupScreen() {
                 <LinearGradient
                   colors={["#A68BF7", "#C4B4FD"]}
                   start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
+                  end={{ x: 0, y: 0 }}
                   style={{
                     borderRadius: 6,
                     height: 48,
@@ -1067,12 +1104,15 @@ export default function GroupScreen() {
           {/* Leave Group Button */}
           <Pressable
             onPress={handleLeaveGroup}
-            className="mx-6 my-6 mb-12 border border-violet-300 px-4 py-3 rounded-lg items-center active:bg-gray-100"
+            className="mx-6 my-6 border border-violet-300 px-4 py-3 rounded-lg items-center active:bg-gray-100"
           >
             <GaretText className="text-violet-400 font-semibold">
               Leave Group
             </GaretText>
           </Pressable>
+
+          {/* Bottom spacing */}
+          <View style={{ height: 40 }} />
         </View>
       </ScrollView>
 

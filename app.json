@@ -2,26 +2,28 @@
   "expo": {
     "name": "Group Sing Along",
     "slug": "group-sing-along-mobile",
-    "scheme": "groupsingalong",
     "version": "1.0.0",
     "orientation": "portrait",
     "icon": "./assets/icon.png",
     "userInterfaceStyle": "light",
+    "scheme": "groupsingalong",
     "newArchEnabled": true,
     "splash": {
       "backgroundColor": "#ffffff"
     },
     "ios": {
       "supportsTablet": true,
-      "buildNumber": "0",
       "bundleIdentifier": "org.cybergoose.groupsingalong",
-      "deploymentTarget": "16.0",
-      "infoPlist": {
-        "ITSAppUsesNonExemptEncryption": false
+      "deploymentTarget": "16.0"
+    },
+    "android": {
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/adaptive-icon.png",
+        "backgroundColor": "#ffffff"
       },
-      "config": {
-        "usesNonExemptEncryption": false
-      }
+      "edgeToEdgeEnabled": true,
+      "predictiveBackGestureEnabled": false,
+      "package": "org.cybergoose.groupsingalong"
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -32,16 +34,10 @@
         "react-native-iap",
         {
           "ios": {
-            "enableStoreKit2": true
+            "enableStoreKit2": false
           }
         }
       ]
-    ],
-    "assetBundlePatterns": [
-      "**/*"
-    ],
-    "android": {
-      "package": "org.cybergoose.groupsingalong"
-    }
+    ]
   }
 }

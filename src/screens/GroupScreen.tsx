@@ -78,6 +78,7 @@ export default function GroupScreen() {
   const [currentArtist, setCurrentArtist] = useState("");
   const [albumCover, setAlbumCover] = useState("");
   const [memberCount, setMemberCount] = useState(0);
+  const [hostLimit, setHostLimit] = useState(3); // Host's member limit (received via Pusher)
   const [fontSize, setFontSize] = useState(16);
 
   // Song search state (for hosts)
@@ -153,6 +154,10 @@ export default function GroupScreen() {
       if (data.albumCover) {
         setAlbumCover(data.albumCover);
       }
+      // Capture host's member limit for paywall enforcement
+      if (data.hostLimit) {
+        setHostLimit(data.hostLimit);
+      }
 
       // Auto-remove matching song request (for hosts)
       if (isHost) {
@@ -174,24 +179,23 @@ export default function GroupScreen() {
     console.log("Host received new-user-joined event");
     if (isHost) {
       try {
-        // Broadcast current lyrics
-        if (lyrics && currentSong) {
-          await api.triggerPusherEvent(
-            `group-lyrics-${groupId}`,
-            "lyric-update",
-            {
-              title: currentSong,
-              artist: currentArtist,
-              lyrics: lyrics,
-              albumCover,
-            }
-          );
-        }
+        // Broadcast current lyrics AND host's member limit
+        await api.triggerPusherEvent(
+          `group-lyrics-${groupId}`,
+          "lyric-update",
+          {
+            title: currentSong || "",
+            artist: currentArtist || "",
+            lyrics: lyrics || "",
+            albumCover,
+            hostLimit: memberLimit, // Include host's limit for paywall enforcement
+          }
+        );
       } catch (error) {
         console.error("Error re-broadcasting info:", error);
       }
     }
-  }, [isHost, lyrics, currentSong, currentArtist, albumCover, groupId]);
+  }, [isHost, lyrics, currentSong, currentArtist, albumCover, groupId, memberLimit]);
 
   const handleSubscriptionSucceeded = useCallback(async () => {
     if (!isHost) {
@@ -212,13 +216,17 @@ export default function GroupScreen() {
   }, [isHost, groupId]);
 
   // Paywall enforcement: kick singers if they join a full room
+  // Uses hostLimit (received from host via Pusher) for singers
   useEffect(() => {
+    // For singers, use the host's limit; for hosts, use their own limit
+    const effectiveLimit = isHost ? memberLimit : hostLimit;
+
     // Debug logging
-    console.log(`[PAYWALL CHECK] isHost: ${isHost}, memberCount: ${memberCount}, memberLimit: ${memberLimit}, tier: ${tier}`);
+    console.log(`[PAYWALL CHECK] isHost: ${isHost}, memberCount: ${memberCount}, effectiveLimit: ${effectiveLimit}, hostLimit: ${hostLimit}`);
 
     // Only check for singers (not hosts) and only if we have a valid member count
-    if (!isHost && memberCount > memberLimit && memberCount > 0) {
-      console.log(`🚫 Room is full: ${memberCount}/${memberLimit} - KICKING USER`);
+    if (!isHost && memberCount > effectiveLimit && memberCount > 0) {
+      console.log(`🚫 Room is full: ${memberCount}/${effectiveLimit} - KICKING USER`);
 
       // Immediately navigate back and clear storage
       const kickUser = async () => {
@@ -230,7 +238,7 @@ export default function GroupScreen() {
       // Show alert and kick regardless of user action
       Alert.alert(
         "Room Full",
-        `This group has reached its ${memberLimit}-member capacity. Ask the host to upgrade to allow more members.`,
+        `This group has reached its ${effectiveLimit}-member capacity. Ask the host to upgrade to allow more members.`,
         [
           {
             text: "OK",
@@ -245,7 +253,7 @@ export default function GroupScreen() {
     } else {
       console.log(`[PAYWALL CHECK] Not kicking - condition not met`);
     }
-  }, [memberCount, memberLimit, isHost, tier, navigation]);
+  }, [memberCount, memberLimit, hostLimit, isHost, navigation]);
 
   // Handle host disconnect - notify all members
   const handleHostDisconnect = useCallback(async () => {
@@ -389,20 +397,22 @@ export default function GroupScreen() {
     onSessionExpired: handleSessionExpiredReceived,
   });
 
-  // Real-time member limit enforcement
+  // Real-time member limit enforcement (shows notification modal)
   useEffect(() => {
+    // Use host's limit for singers, own limit for hosts
+    const effectiveLimit = isHost ? memberLimit : hostLimit;
+
     // Only enforce if member count exceeds limit
     // Don't kick existing members, just show notification
-    if (memberCount > memberLimit && memberCount > 0) {
+    if (memberCount > effectiveLimit && memberCount > 0) {
       if (isHost) {
         // Show modal to host
         setLimitModalType("host");
         setShowLimitModal(true);
       }
-      // Note: We don't auto-kick singers - they can stay if they were already in
-      // New joins will be prevented by the handleInvite function
+      // Note: We don't auto-kick singers here - that's handled by the paywall enforcement effect
     }
-  }, [memberCount, memberLimit, isHost]);
+  }, [memberCount, memberLimit, hostLimit, isHost]);
 
   // Handle app state changes for host disconnect
   useEffect(() => {
@@ -540,12 +550,13 @@ export default function GroupScreen() {
       setCurrentArtist(song.artist);
       setAlbumCover(song.album.cover_medium);
 
-      // Broadcast to all users via Pusher
+      // Broadcast to all users via Pusher (including host's limit for paywall)
       await api.triggerPusherEvent(`group-lyrics-${groupId}`, "lyric-update", {
         title: song.title,
         artist: song.artist,
         lyrics: fetchedLyrics,
         albumCover: song.album.cover_medium,
+        hostLimit: memberLimit,
       });
 
       setSearchTerm("");

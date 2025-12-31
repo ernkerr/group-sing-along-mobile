@@ -7,7 +7,6 @@ import {
   Alert,
   AppState,
   AppStateStatus,
-  Text,
   Platform,
   Modal,
 } from "react-native";
@@ -40,8 +39,6 @@ import { useTheme } from "@/context/ThemeContext";
 import { SubscriptionTier } from "@/types/subscription";
 
 import iconDark from "../assets/iconDark.png";
-
-// const iconDark = require('@/assets/iconDark.png')
 
 type GroupScreenRouteProp = RouteProp<RootStackParamList, "Group">;
 

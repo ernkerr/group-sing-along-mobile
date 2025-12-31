@@ -1,7 +1,8 @@
-import React, { useState } from 'react'
+import React, { useState, useRef } from 'react'
 import { Alert } from 'react-native'
 import {
   initConnection,
+  endConnection,
   getAvailablePurchases,
   finishTransaction,
   Purchase,
@@ -18,12 +19,17 @@ interface RestoreButtonProps {
 
 export function RestoreButton({ onSuccess }: RestoreButtonProps) {
   const [loading, setLoading] = useState(false)
+  const onSuccessRef = useRef(onSuccess)
+  onSuccessRef.current = onSuccess
 
   const handleRestore = async () => {
     setLoading(true)
+    let connectionInitialized = false
+
     try {
       // Initialize IAP connection first
       await initConnection()
+      connectionInitialized = true
 
       // Get all available purchases from the store
       const restoredPurchases: Purchase[] = await getAvailablePurchases()
@@ -33,7 +39,6 @@ export function RestoreButton({ onSuccess }: RestoreButtonProps) {
           'No Purchases Found',
           "We couldn't find any previous purchases."
         )
-        setLoading(false)
         return
       }
 
@@ -75,7 +80,7 @@ export function RestoreButton({ onSuccess }: RestoreButtonProps) {
         await storage.setSubscriptionExpiry(expiry.toISOString())
 
         Alert.alert('Restored', 'Your subscription has been restored.')
-        onSuccess?.()
+        onSuccessRef.current?.()
       } else {
         Alert.alert(
           'No Purchases Found',
@@ -89,6 +94,10 @@ export function RestoreButton({ onSuccess }: RestoreButtonProps) {
         'Failed to restore purchases. Please try again later.'
       )
     } finally {
+      // Always clean up connection
+      if (connectionInitialized) {
+        await endConnection()
+      }
       setLoading(false)
     }
   }

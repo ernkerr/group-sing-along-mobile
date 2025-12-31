@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useState, useRef } from 'react'
 import { Alert } from 'react-native'
 import {
   initConnection,
@@ -15,6 +15,9 @@ import { Button } from '@/components/ui/Button'
 import { GaretText } from '@/components/ui/Typography'
 import { MusicLoader } from '@/components/ui/MusicLoader'
 
+// Track IAP connection globally to prevent multiple connections
+let iapConnectionCount = 0
+
 interface BuyButtonProps {
   tier: SubscriptionTier
   period: SubscriptionPeriod
@@ -28,14 +31,26 @@ export function BuyButton({ tier, period, onSuccess, variant = 'gradient', size 
   const [product, setProduct] = useState<any>(null)
   const [loading, setLoading] = useState(false)
 
+  // Use refs to track latest values without rebinding listeners
+  const tierRef = useRef(tier)
+  const periodRef = useRef(period)
+  const onSuccessRef = useRef(onSuccess)
+  tierRef.current = tier
+  periodRef.current = period
+  onSuccessRef.current = onSuccess
+
   useEffect(() => {
     let purchaseUpdateSub: any
     let purchaseErrorSub: any
+    let isMounted = true
 
     const init = async () => {
       try {
-        // Initialize IAP connection first
-        await initConnection()
+        // Initialize IAP connection (track count to prevent leaks)
+        if (iapConnectionCount === 0) {
+          await initConnection()
+        }
+        iapConnectionCount++
 
         // Get the SKU for this tier/period combination
         const sku = getSku(tier, period)
@@ -46,54 +61,66 @@ export function BuyButton({ tier, period, onSuccess, variant = 'gradient', size 
 
         // Load product info
         const products = await getProducts({ skus: [sku] })
-        if (products && products.length > 0) {
+        if (isMounted && products && products.length > 0) {
           setProduct(products[0])
         }
       } catch (err) {
         console.warn('Error loading IAP products:', err)
       }
 
-      // Listen to purchase updates
+      // Listen to purchase updates - use refs for latest values
       purchaseUpdateSub = purchaseUpdatedListener(
         async (purchase: any) => {
           try {
             const receipt = purchase.transactionId || purchase.transactionReceipt
             if (receipt) {
-              // Save subscription to storage
-              await storage.setSubscriptionTier(tier)
-              await storage.setSubscriptionPeriod(period)
-              const expiry = calculateExpiry(period)
+              // Save subscription to storage using latest ref values
+              await storage.setSubscriptionTier(tierRef.current)
+              await storage.setSubscriptionPeriod(periodRef.current)
+              const expiry = calculateExpiry(periodRef.current)
               await storage.setSubscriptionExpiry(expiry.toISOString())
 
               // Acknowledge / Finish transaction (very important!)
               await finishTransaction({ purchase })
 
-              setLoading(false)
-              onSuccess?.()
+              if (isMounted) setLoading(false)
+              onSuccessRef.current?.()
             }
           } catch (ackErr) {
-            setLoading(false)
+            if (isMounted) setLoading(false)
             console.warn('Failed to finish transaction:', ackErr)
           }
         }
       )
 
-      // Listen to purchase errors
+      // Listen to purchase errors (includes user cancellation)
       purchaseErrorSub = purchaseErrorListener((error: any) => {
-        setLoading(false)
+        if (isMounted) setLoading(false)
+        // Don't show alert for user cancellation (error code E_USER_CANCELLED)
+        if (error.code === 'E_USER_CANCELLED') {
+          console.log('User cancelled purchase')
+          return
+        }
         console.warn('Purchase error:', error)
         Alert.alert('Purchase failed', error.message || 'Please try again.')
       })
     }
 
-    init()
+    init().catch((err) => {
+      console.warn('IAP init error:', err)
+    })
 
     return () => {
+      isMounted = false
       purchaseUpdateSub?.remove()
       purchaseErrorSub?.remove()
-      endConnection()
+      // Only end connection when no more BuyButtons are mounted
+      iapConnectionCount--
+      if (iapConnectionCount === 0) {
+        endConnection()
+      }
     }
-  }, [tier, period, onSuccess])
+  }, [tier, period]) // Don't depend on onSuccess - we use ref
 
   const handleBuy = async () => {
     const sku = getSku(tier, period)

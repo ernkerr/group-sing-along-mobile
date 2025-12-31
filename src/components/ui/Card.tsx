@@ -38,29 +38,3 @@ export function Card({ children, className }: CardProps) {
     </View>
   )
 }
-
-interface CardHeaderProps {
-  children: React.ReactNode
-  className?: string
-}
-
-export function CardHeader({ children, className }: CardHeaderProps) {
-  return (
-    <View className={cn('mb-4', className)}>
-      {children}
-    </View>
-  )
-}
-
-interface CardContentProps {
-  children: React.ReactNode
-  className?: string
-}
-
-export function CardContent({ children, className }: CardContentProps) {
-  return (
-    <View className={className}>
-      {children}
-    </View>
-  )
-}

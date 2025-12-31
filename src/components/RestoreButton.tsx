@@ -1,6 +1,7 @@
 import React, { useState } from 'react'
 import { Alert } from 'react-native'
 import {
+  initConnection,
   getAvailablePurchases,
   finishTransaction,
   Purchase,
@@ -21,6 +22,9 @@ export function RestoreButton({ onSuccess }: RestoreButtonProps) {
   const handleRestore = async () => {
     setLoading(true)
     try {
+      // Initialize IAP connection first
+      await initConnection()
+
       // Get all available purchases from the store
       const restoredPurchases: Purchase[] = await getAvailablePurchases()
 

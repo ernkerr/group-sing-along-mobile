@@ -1,7 +1,9 @@
 import React, { useEffect, useState } from 'react'
 import { Alert } from 'react-native'
 import {
-  fetchProducts,
+  initConnection,
+  endConnection,
+  getProducts,
   requestPurchase,
   purchaseUpdatedListener,
   purchaseErrorListener,
@@ -32,6 +34,9 @@ export function BuyButton({ tier, period, onSuccess, variant = 'gradient', size 
 
     const init = async () => {
       try {
+        // Initialize IAP connection first
+        await initConnection()
+
         // Get the SKU for this tier/period combination
         const sku = getSku(tier, period)
         if (!sku) {
@@ -40,7 +45,7 @@ export function BuyButton({ tier, period, onSuccess, variant = 'gradient', size 
         }
 
         // Load product info
-        const products = await fetchProducts({ skus: [sku] })
+        const products = await getProducts({ skus: [sku] })
         if (products && products.length > 0) {
           setProduct(products[0])
         }
@@ -86,6 +91,7 @@ export function BuyButton({ tier, period, onSuccess, variant = 'gradient', size 
     return () => {
       purchaseUpdateSub?.remove()
       purchaseErrorSub?.remove()
+      endConnection()
     }
   }, [tier, period, onSuccess])
 

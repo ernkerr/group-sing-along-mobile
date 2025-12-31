@@ -348,6 +348,19 @@ export default function LandingScreen() {
             </View>
           </View>
 
+          {/* Pricing CTA */}
+          <View className="mt-12 mb-20">
+            <Button
+              onPress={() => navigation.navigate("Pricing")}
+              variant="gradient"
+              size="lg"
+            >
+              <InterText className="text-white font-semibold text-xl">
+                View Pricing Plans
+              </InterText>
+            </Button>
+          </View>
+
           {/* How it Works */}
           <View className="mb-12">
             <BricolageText

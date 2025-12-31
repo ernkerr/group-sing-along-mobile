@@ -1,0 +1,27 @@
+{
+  "cli": {
+    "version": ">= 16.13.2",
+    "appVersionSource": "remote"
+  },
+  "build": {
+    "development": {
+      "developmentClient": true,
+      "distribution": "internal",
+      "autoIncrement": true
+    },
+    "preview": {
+      "distribution": "internal"
+    },
+    "production": {
+      "autoIncrement": true,
+      "env": {
+        "EXPO_PUBLIC_API_BASE_URL": "https://groupsingalong.com",
+        "EXPO_PUBLIC_PUSHER_KEY": "01aa45d4173f39f2a8a8",
+        "EXPO_PUBLIC_PUSHER_CLUSTER": "us3"
+      }
+    }
+  },
+  "submit": {
+    "production": {}
+  }
+}

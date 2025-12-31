@@ -19,11 +19,16 @@ export function ShareModal({ isVisible, onClose, groupId }: ShareModalProps) {
 
   const handleNativeShare = async () => {
     try {
-      const result = await Share.share({
-        message: `Join my group sing-along! Use code: ${groupId} or visit ${shareUrl}`,
-        url: Platform.OS === 'ios' ? shareUrl : undefined,
-        title: 'Join Group Sing Along',
-      })
+      const result = await Share.share(
+        Platform.OS === 'ios'
+          ? {
+              message: `Join my group sing-along! Use code: ${groupId}`,
+              url: shareUrl,
+            }
+          : {
+              message: `Join my group sing-along! Use code: ${groupId}\n${shareUrl}`,
+            }
+      )
 
       if (result.action === Share.sharedAction) {
         console.log('Shared successfully')

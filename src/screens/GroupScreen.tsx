@@ -426,21 +426,40 @@ export default function GroupScreen() {
   }, [memberCount, memberLimit, hostLimit, isHost]);
 
   // Handle app state changes for host disconnect
+  // Use a delay to avoid false disconnects when host briefly backgrounds (screenshot, share, etc.)
   useEffect(() => {
     if (!isHost) return;
+
+    let disconnectTimer: ReturnType<typeof setTimeout> | null = null;
+    const DISCONNECT_DELAY_MS = 10000; // 10 seconds grace period
 
     const subscription = AppState.addEventListener(
       "change",
       (nextAppState: AppStateStatus) => {
-        // If host is backgrounding or quitting the app
-        if (nextAppState === "background" || nextAppState === "inactive") {
-          handleHostDisconnect();
+        if (nextAppState === "background") {
+          // Start a timer - only disconnect if host stays backgrounded
+          disconnectTimer = setTimeout(() => {
+            console.log("Host stayed in background, sending disconnect");
+            handleHostDisconnect();
+          }, DISCONNECT_DELAY_MS);
+        } else if (nextAppState === "active") {
+          // Host came back - cancel any pending disconnect
+          if (disconnectTimer) {
+            console.log("Host returned to app, canceling disconnect timer");
+            clearTimeout(disconnectTimer);
+            disconnectTimer = null;
+          }
         }
+        // Note: "inactive" state is ignored - it's a transitional state
+        // (e.g., notification center, share sheet, screenshot)
       }
     );
 
     // Cleanup on unmount - notify users that host is leaving
     return () => {
+      if (disconnectTimer) {
+        clearTimeout(disconnectTimer);
+      }
       subscription.remove();
       handleHostDisconnect();
     };

@@ -15,21 +15,3 @@ export const initPusher = (): Pusher => {
   }
   return pusherInstance
 }
-
-/**
- * Get the current Pusher instance
- */
-export const getPusher = (): Pusher | null => {
-  return pusherInstance
-}
-
-/**
- * Disconnect and cleanup Pusher instance
- */
-export const disconnectPusher = (): void => {
-  if (pusherInstance) {
-    pusherInstance.disconnect()
-    pusherInstance = null
-    console.log('Pusher disconnected')
-  }
-}

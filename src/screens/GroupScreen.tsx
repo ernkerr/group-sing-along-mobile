@@ -29,6 +29,7 @@ import { RocaText, GaretText } from "@/components/ui/Typography";
 import { Input } from "@/components/ui/Input";
 import { ShareModal } from "@/components/ShareModal";
 import { PaywallModal } from "@/components/PaywallModal";
+import { SessionTimer } from "@/components/SessionTimer";
 import { MusicLoader } from "@/components/ui/MusicLoader";
 import { storage } from "@/services/storage";
 import { usePusher } from "@/hooks/usePusher";
@@ -112,7 +113,6 @@ export default function GroupScreen() {
 
   // Session expiry state (for EVENT tier 24-hour timer)
   const [sessionExpiresAt, setSessionExpiresAt] = useState<string | null>(null);
-  const [timeRemaining, setTimeRemaining] = useState<number | null>(null);
 
   useEffect(() => {
     loadRole();
@@ -363,37 +363,6 @@ export default function GroupScreen() {
     );
   }, [navigation]);
 
-  // Timer countdown for EVENT tier (hosts only)
-  useEffect(() => {
-    if (!sessionExpiresAt || !isHost || tier !== SubscriptionTier.EVENT) return;
-
-    const interval = setInterval(async () => {
-      const now = new Date();
-      const expiry = new Date(sessionExpiresAt);
-      const remaining = Math.floor((expiry.getTime() - now.getTime()) / 1000);
-
-      if (remaining <= 0) {
-        clearInterval(interval);
-        // Broadcast session-expired event to all members
-        try {
-          await api.triggerPusherEvent(
-            `group-lyrics-${groupId}`,
-            "session-expired",
-            { message: "24-hour session has ended" }
-          );
-        } catch (error) {
-          console.error("Error broadcasting session expiry:", error);
-        }
-        // Show expiry alert
-        handleSessionExpiredReceived();
-      } else {
-        setTimeRemaining(remaining);
-      }
-    }, 1000);
-
-    return () => clearInterval(interval);
-  }, [sessionExpiresAt, isHost, tier, groupId, handleSessionExpiredReceived]);
-
   // Initialize Pusher connection
   usePusher(groupId, {
     onLyricUpdate: handleLyricUpdate,
@@ -472,16 +441,6 @@ export default function GroupScreen() {
 
   const increaseFontSize = () => setFontSize((prev) => Math.min(prev + 2, 32));
   const decreaseFontSize = () => setFontSize((prev) => Math.max(prev - 2, 10));
-
-  // Format time remaining (seconds) to HH:MM:SS
-  const formatTimeRemaining = (seconds: number): string => {
-    const hours = Math.floor(seconds / 3600);
-    const minutes = Math.floor((seconds % 3600) / 60);
-    const secs = seconds % 60;
-    return `${hours.toString().padStart(2, "0")}:${minutes
-      .toString()
-      .padStart(2, "0")}:${secs.toString().padStart(2, "0")}`;
-  };
 
   // Search for songs (Deezer) - Host
   const handleSearch = async () => {
@@ -744,18 +703,12 @@ export default function GroupScreen() {
           </View>
 
           {/* EVENT Tier Timer Display */}
-          {tier === SubscriptionTier.EVENT && timeRemaining !== null && (
-            <View
-              className="mx-6 mt-4 px-4 py-3 rounded-lg border"
-              style={{
-                backgroundColor: "#fef3c7",
-                borderColor: "#f59e0b",
-              }}
-            >
-              <GaretText className="text-sm font-semibold text-center text-amber-800">
-                ⏱️ Session expires in: {formatTimeRemaining(timeRemaining)}
-              </GaretText>
-            </View>
+          {tier === SubscriptionTier.EVENT && isHost && sessionExpiresAt && (
+            <SessionTimer
+              sessionExpiresAt={sessionExpiresAt}
+              groupId={groupId}
+              onSessionExpired={handleSessionExpiredReceived}
+            />
           )}
 
           {/* Singer Search Section */}

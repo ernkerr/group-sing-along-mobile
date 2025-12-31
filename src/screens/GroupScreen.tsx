@@ -240,14 +240,17 @@ export default function GroupScreen() {
         `🚫 Room is full: ${memberCount}/${effectiveLimit} - KICKING USER`
       );
 
-      // Immediately navigate back and clear storage
+      // Use flag to prevent multiple kicks
+      let hasKicked = false;
       const kickUser = async () => {
+        if (hasKicked) return;
+        hasKicked = true;
         console.log("Executing kickUser - clearing storage and going back");
         await storage.clearAll();
         navigation.goBack();
       };
 
-      // Show alert and kick regardless of user action
+      // Show alert - user tapping OK will kick
       Alert.alert(
         "Room Full",
         `This group has reached its ${effectiveLimit}-member capacity. Ask the host to upgrade to allow more members.`,
@@ -257,11 +260,8 @@ export default function GroupScreen() {
             onPress: kickUser,
           },
         ],
-        { cancelable: false, onDismiss: kickUser }
+        { cancelable: false }
       );
-
-      // Also kick immediately after 1 second if alert somehow doesn't work
-      setTimeout(kickUser, 1000);
     } else {
       console.log(`[PAYWALL CHECK] Not kicking - condition not met`);
     }

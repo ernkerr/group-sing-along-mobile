@@ -28,13 +28,17 @@ interface UsePusherCallbacks {
 
 /**
  * Custom hook to manage Pusher channel subscriptions
- * Based on the web app's implementation pattern
+ * Uses refs to track callbacks so event bindings always call the latest version
  */
 export const usePusher = (
   groupId: string,
   callbacks: UsePusherCallbacks = {}
 ) => {
   const channelRef = useRef<PresenceChannel | null>(null)
+
+  // Use refs to always have access to the latest callbacks without rebinding
+  const callbacksRef = useRef(callbacks)
+  callbacksRef.current = callbacks
 
   useEffect(() => {
     if (!groupId) return
@@ -47,48 +51,43 @@ export const usePusher = (
     console.log('Subscribed to Pusher channel:', channelName)
 
     // Bind to lyric-update event
-    if (callbacks.onLyricUpdate) {
-      channelRef.current.bind('lyric-update', callbacks.onLyricUpdate)
-    }
+    channelRef.current.bind('lyric-update', (data: LyricUpdateData) => {
+      callbacksRef.current.onLyricUpdate?.(data)
+    })
 
     // Bind to new-user-joined event
-    if (callbacks.onNewUserJoined) {
-      channelRef.current.bind('new-user-joined', callbacks.onNewUserJoined)
-    }
+    channelRef.current.bind('new-user-joined', () => {
+      callbacksRef.current.onNewUserJoined?.()
+    })
 
     // Bind to subscription succeeded event
-    if (callbacks.onSubscriptionSucceeded) {
-      channelRef.current.bind(
-        'pusher:subscription_succeeded',
-        callbacks.onSubscriptionSucceeded
-      )
-    }
+    channelRef.current.bind('pusher:subscription_succeeded', () => {
+      callbacksRef.current.onSubscriptionSucceeded?.()
+    })
 
     // Bind to Pusher's built-in subscription count event
-    if (callbacks.onSubscriptionCount) {
-      channelRef.current.bind(
-        'pusher:subscription_count',
-        (data: { subscription_count: number }) => {
-          console.log('Subscription count:', data.subscription_count)
-          callbacks.onSubscriptionCount?.(data.subscription_count)
-        }
-      )
-    }
+    channelRef.current.bind(
+      'pusher:subscription_count',
+      (data: { subscription_count: number }) => {
+        console.log('Subscription count:', data.subscription_count)
+        callbacksRef.current.onSubscriptionCount?.(data.subscription_count)
+      }
+    )
 
     // Bind to host disconnect event
-    if (callbacks.onHostDisconnect) {
-      channelRef.current.bind('host-disconnect', callbacks.onHostDisconnect)
-    }
+    channelRef.current.bind('host-disconnect', () => {
+      callbacksRef.current.onHostDisconnect?.()
+    })
 
     // Bind to song request event
-    if (callbacks.onSongRequest) {
-      channelRef.current.bind('song-request', callbacks.onSongRequest)
-    }
+    channelRef.current.bind('song-request', (data: SongRequestData) => {
+      callbacksRef.current.onSongRequest?.(data)
+    })
 
     // Bind to session expired event (for EVENT tier)
-    if (callbacks.onSessionExpired) {
-      channelRef.current.bind('session-expired', callbacks.onSessionExpired)
-    }
+    channelRef.current.bind('session-expired', () => {
+      callbacksRef.current.onSessionExpired?.()
+    })
 
     // Cleanup function
     return () => {
@@ -99,7 +98,7 @@ export const usePusher = (
         console.log('Unsubscribed from Pusher channel:', channelName)
       }
     }
-  }, [groupId]) // Only depend on groupId to prevent rebinding when callbacks change
+  }, [groupId])
 
   return channelRef.current
 }

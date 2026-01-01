@@ -117,13 +117,17 @@ export function Input({
           style={[
             {
               color: colors.foreground,
+              fontFamily: "Garet",
               paddingHorizontal: 12,
               paddingVertical: 0,
               margin: 0,
-              // textAlign,
+              textAlign,
+              textAlignVertical,
               fontSize: style?.fontSize,
               fontWeight: style?.fontWeight,
               letterSpacing: style?.letterSpacing,
+              lineHeight: style?.fontSize ? style.fontSize * 1.2 : undefined,
+              includeFontPadding: false,
             },
           ]}
           placeholder={placeholder}

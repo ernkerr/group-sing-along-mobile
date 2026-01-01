@@ -1,10 +1,10 @@
 import React, { useState } from "react";
-import { View, ScrollView, Modal, Pressable, Alert } from "react-native";
+import { View, ScrollView, Modal, Pressable, Alert, KeyboardAvoidingView, Platform } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Mic, Users, X } from "lucide-react-native";
-import { BricolageText, InterText, GaretText } from "@/components/ui/Typography";
+import { InterText, GaretText, RocaText } from "@/components/ui/Typography";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { generateGroupCode } from "@/utils/generateCode";
@@ -37,9 +37,10 @@ export default function LandingScreen() {
         memberLimit: TIER_LIMITS[tier],
         currentCount: 1,
         createdAt,
-        expiresAt: tier === SubscriptionTier.EVENT
-          ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
-          : undefined
+        expiresAt:
+          tier === SubscriptionTier.EVENT
+            ? new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+            : undefined,
       };
 
       // Store session info locally
@@ -50,10 +51,7 @@ export default function LandingScreen() {
       navigation.navigate("Group", { id: groupId });
     } catch (error) {
       console.error("Error creating group:", error);
-      Alert.alert(
-        'Error',
-        'Failed to create group. Please try again.'
-      );
+      Alert.alert("Error", "Failed to create group. Please try again.");
     } finally {
       setIsCreating(false);
     }
@@ -77,10 +75,7 @@ export default function LandingScreen() {
       navigation.navigate("Group", { id: groupId });
     } catch (error) {
       console.error("Error joining group:", error);
-      Alert.alert(
-        'Error',
-        'Failed to join group. Please try again.'
-      );
+      Alert.alert("Error", "Failed to join group. Please try again.");
     } finally {
       setIsJoining(false);
     }
@@ -98,18 +93,18 @@ export default function LandingScreen() {
           style={{ borderBottomColor: colors.border }}
         >
           <Mic size={24} color={colors.foreground} />
-          <BricolageText
+          <RocaText
             className="text-xl font-semibold"
             style={{ color: colors.foreground }}
           >
             Group Sing Along
-          </BricolageText>
+          </RocaText>
         </View>
 
         <View className="px-6 py-8">
           {/* Hero Section */}
           <View className="items-center mb-8">
-            <BricolageText
+            <RocaText
               className="text-center mb-4"
               style={{
                 fontSize: 36,
@@ -119,7 +114,7 @@ export default function LandingScreen() {
               }}
             >
               Make Group Singing Easy and Fun
-            </BricolageText>
+            </RocaText>
             <InterText
               className="text-center mb-8"
               style={{
@@ -170,99 +165,107 @@ export default function LandingScreen() {
             animationType="fade"
             onRequestClose={() => setShowJoinInput(false)}
           >
-            <Pressable
-              className="flex-1 bg-black/50 justify-center items-center px-6"
-              onPress={() => setShowJoinInput(false)}
+            <KeyboardAvoidingView
+              behavior={Platform.OS === "ios" ? "padding" : "height"}
+              style={{ flex: 1 }}
             >
-              <Pressable onPress={(e) => e.stopPropagation()}>
-                <View
-                  className="rounded-2xl p-8 w-full max-w-md"
-                  style={{ minWidth: 320, backgroundColor: colors.card }}
-                >
-                  {/* Modal Header */}
-                  <View className="flex-row items-center justify-between mb-6">
-                    <GaretText
-                      className="font-bold"
-                      style={{ fontSize: 28, color: colors.foreground }}
-                    >
-                      Join Group
-                    </GaretText>
-                    <Pressable
-                      onPress={() => setShowJoinInput(false)}
-                      className="p-2 -mr-2"
-                    >
-                      <X size={24} color={colors.muted} />
-                    </Pressable>
-                  </View>
-
-                  {/* Modal Content */}
-                  <GaretText
-                    className="mb-6"
-                    style={{ fontSize: 18, lineHeight: 26, color: colors.mutedForeground }}
+              <Pressable
+                className="flex-1 bg-black/50 justify-center items-center px-6"
+                onPress={() => setShowJoinInput(false)}
+              >
+                <Pressable onPress={(e) => e.stopPropagation()}>
+                  <View
+                    className="rounded-2xl p-8 w-full max-w-md"
+                    style={{ minWidth: 320, backgroundColor: colors.card }}
                   >
-                    Enter the 4-letter code shared by your group host to join
-                    the sing-along session.
-                  </GaretText>
+                    {/* Modal Header */}
+                    <View className="flex-row items-center justify-between mb-6">
+                      <RocaText
+                        className="font-bold"
+                        style={{ fontSize: 28, color: colors.foreground }}
+                      >
+                        Join Group
+                      </RocaText>
+                      <Pressable
+                        onPress={() => setShowJoinInput(false)}
+                        className="p-2 -mr-2"
+                      >
+                        <X size={24} color={colors.muted} />
+                      </Pressable>
+                    </View>
 
-                  <View className="mb-6">
+                    {/* Modal Content */}
                     <GaretText
-                      className="font-semibold mb-3"
-                      style={{ fontSize: 16, color: colors.foreground }}
-                    >
-                      Group Code
-                    </GaretText>
-                    <Input
-                      placeholder="ABCD"
-                      value={joinCode}
-                      onChangeText={setJoinCode}
-                      autoCapitalize="characters"
-                      maxLength={4}
-                      textAlign="center"
-                      textAlignVertical="center"
+                      className="mb-6"
                       style={{
-                        fontSize: 28,
-                        fontWeight: 'bold',
-                        letterSpacing: 8,
-                        height: 56,
+                        fontSize: 18,
+                        lineHeight: 26,
+                        color: colors.mutedForeground,
                       }}
-                    />
-                  </View>
-
-                  <View className="gap-3">
-                    <Button
-                      onPress={handleJoinGroup}
-                      loading={isJoining}
-                      disabled={joinCode.length !== 4}
-                      variant="gradient"
-                      size="lg"
                     >
-                      <GaretText
-                        className="text-white font-semibold"
-                        style={{ fontSize: 18 }}
-                      >
-                        Join Now
-                      </GaretText>
-                    </Button>
+                      Enter the 4-letter code shared by your group host to join
+                      the sing-along session.
+                    </GaretText>
 
-                    <Button
-                      onPress={() => {
-                        setShowJoinInput(false);
-                        setJoinCode("");
-                      }}
-                      variant="ghost"
-                      size="lg"
-                    >
+                    <View className="mb-6">
                       <GaretText
-                        className="font-semibold"
-                        style={{ fontSize: 16, color: colors.mutedForeground }}
+                        className="font-semibold mb-3"
+                        style={{ fontSize: 16, color: colors.foreground }}
                       >
-                        Cancel
+                        Group Code
                       </GaretText>
-                    </Button>
+                      <Input
+                        placeholder="ABCD"
+                        value={joinCode}
+                        onChangeText={setJoinCode}
+                        autoCapitalize="characters"
+                        maxLength={4}
+                        textAlign="center"
+                        textAlignVertical="center"
+                        style={{
+                          fontSize: 28,
+                          letterSpacing: 2,
+                          height: 56,
+                        }}
+                      />
+                    </View>
+
+                    <View className="gap-3">
+                      <Button
+                        onPress={handleJoinGroup}
+                        loading={isJoining}
+                        disabled={joinCode.length !== 4}
+                        variant="gradient"
+                        size="lg"
+                      >
+                        <GaretText
+                          className="text-white font-semibold"
+                          style={{ fontSize: 18 }}
+                        >
+                          Join Now
+                        </GaretText>
+                      </Button>
+
+                      <Button
+                        onPress={() => {
+                          setShowJoinInput(false);
+                          setJoinCode("");
+                        }}
+                        variant="ghost"
+                        size="lg"
+                      >
+                        <GaretText
+                          className="font-semibold"
+                          style={{ fontSize: 16, color: colors.mutedForeground }}
+                        >
+                          Cancel
+                        </GaretText>
+                      </Button>
+                    </View>
                   </View>
-                </View>
+                </Pressable>
               </Pressable>
-            </Pressable>
+            </KeyboardAvoidingView>
           </Modal>
 
           {/* Example Preview Card with Backlit Shadow */}
@@ -310,12 +313,12 @@ export default function LandingScreen() {
                   </View>
                 </View>
                 <View className="px-4 py-6">
-                  <BricolageText
+                  <RocaText
                     className="text-2xl font-bold text-center mb-2"
                     style={{ color: colors.foreground }}
                   >
                     Bohemian Rhapsody
-                  </BricolageText>
+                  </RocaText>
                   <InterText
                     className="text-base text-center mb-6"
                     style={{ color: colors.mutedForeground }}
@@ -374,12 +377,12 @@ export default function LandingScreen() {
 
           {/* How it Works */}
           <View className="mb-12">
-            <BricolageText
+            <RocaText
               className="text-3xl font-bold mb-3 text-center"
               style={{ color: colors.foreground }}
             >
               How It Works
-            </BricolageText>
+            </RocaText>
             <InterText
               className="text-base text-center mb-8"
               style={{ color: colors.mutedForeground }}
@@ -400,12 +403,12 @@ export default function LandingScreen() {
                     1
                   </InterText>
                 </View>
-                <BricolageText
+                <RocaText
                   className="text-xl font-bold mb-2 text-center"
                   style={{ color: colors.foreground }}
                 >
                   Create a Group
-                </BricolageText>
+                </RocaText>
                 <InterText
                   className="text-base text-center"
                   style={{ color: colors.mutedForeground }}
@@ -427,12 +430,12 @@ export default function LandingScreen() {
                     2
                   </InterText>
                 </View>
-                <BricolageText
+                <RocaText
                   className="text-xl font-bold mb-2 text-center"
                   style={{ color: colors.foreground }}
                 >
                   Share the Code
-                </BricolageText>
+                </RocaText>
                 <InterText
                   className="text-base text-center"
                   style={{ color: colors.mutedForeground }}
@@ -453,12 +456,12 @@ export default function LandingScreen() {
                     3
                   </InterText>
                 </View>
-                <BricolageText
+                <RocaText
                   className="text-xl font-bold mb-2 text-center"
                   style={{ color: colors.foreground }}
                 >
                   Start Singing
-                </BricolageText>
+                </RocaText>
                 <InterText
                   className="text-base text-center"
                   style={{ color: colors.mutedForeground }}

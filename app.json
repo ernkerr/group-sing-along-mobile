@@ -14,7 +14,10 @@
     "ios": {
       "supportsTablet": true,
       "bundleIdentifier": "org.cybergoose.groupsingalong",
-      "deploymentTarget": "16.0"
+      "deploymentTarget": "16.0",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
     },
     "android": {
       "adaptiveIcon": {
@@ -38,6 +41,11 @@
           }
         }
       ]
-    ]
+    ],
+    "extra": {
+      "eas": {
+        "projectId": "d03eb0b3-2c58-4ad9-a653-2ecba7ba1f9c"
+      }
+    }
   }
 }

@@ -10,6 +10,7 @@ import { cva, type VariantProps } from "class-variance-authority";
 import { cn } from "@/utils/cn";
 import { useTheme } from "@/context/ThemeContext";
 import { MusicLoader } from "./MusicLoader";
+import { BRAND, GRADIENTS } from "@/constants";
 
 const buttonVariants = cva(
   "flex-row items-center justify-center gap-2 rounded-md transition-all",
@@ -114,10 +115,10 @@ export function Button({
       case "outline":
         return {
           backgroundColor: "transparent" as const,
-          borderColor: "#C4B4FD",
+          borderColor: BRAND.primaryLight,
           borderWidth: 1,
           borderStyle: "solid" as const,
-          color: "#C4B4FD",
+          color: BRAND.primaryLight,
         };
       case "secondary":
         return {
@@ -142,7 +143,7 @@ export function Button({
   const getIndicatorColor = () => {
     if (variant === "gradient" || variant === "destructive") return "white";
     if (variant === "default") return colors.primaryForeground;
-    if (variant === "outline") return "#a78bfa";
+    if (variant === "outline") return BRAND.accent;
     return variantStyles.color;
   };
 
@@ -164,7 +165,7 @@ export function Button({
   if (variant === "gradient") {
     return (
       <LinearGradient
-        colors={["#A68BF7", "#C4B4FD"]}
+        colors={GRADIENTS.primary as unknown as string[]}
         start={{ x: 0, y: 0 }}
         end={{ x: 1, y: 0 }}
         style={[
@@ -198,7 +199,7 @@ export function Button({
     return (
       <View
         style={{
-          borderColor: "#C4B4FD",
+          borderColor: BRAND.primaryLight,
           borderWidth: 2,
           borderRadius: 6,
           opacity: disabled || loading ? 0.5 : 1,

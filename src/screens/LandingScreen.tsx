@@ -4,7 +4,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Mic, Users, X } from "lucide-react-native";
-import { BricolageText, InterText } from "@/components/ui/Typography";
+import { BricolageText, InterText, GaretText } from "@/components/ui/Typography";
 import { Button } from "@/components/ui/Button";
 import { Input } from "@/components/ui/Input";
 import { generateGroupCode } from "@/utils/generateCode";
@@ -12,6 +12,7 @@ import { storage } from "@/services/storage";
 import type { RootStackParamList } from "@/types";
 import { useTheme } from "@/context/ThemeContext";
 import { SubscriptionTier, TIER_LIMITS } from "@/types/subscription";
+import { BRAND } from "@/constants";
 
 type NavigationProp = NativeStackNavigationProp<RootStackParamList, "Landing">;
 
@@ -180,12 +181,12 @@ export default function LandingScreen() {
                 >
                   {/* Modal Header */}
                   <View className="flex-row items-center justify-between mb-6">
-                    <BricolageText
-                      className="text-2xl font-bold"
-                      style={{ color: colors.foreground }}
+                    <GaretText
+                      className="font-bold"
+                      style={{ fontSize: 28, color: colors.foreground }}
                     >
                       Join Group
-                    </BricolageText>
+                    </GaretText>
                     <Pressable
                       onPress={() => setShowJoinInput(false)}
                       className="p-2 -mr-2"
@@ -195,28 +196,35 @@ export default function LandingScreen() {
                   </View>
 
                   {/* Modal Content */}
-                  <InterText
-                    className="text-base mb-6"
-                    style={{ color: colors.mutedForeground }}
+                  <GaretText
+                    className="mb-6"
+                    style={{ fontSize: 18, lineHeight: 26, color: colors.mutedForeground }}
                   >
                     Enter the 4-letter code shared by your group host to join
                     the sing-along session.
-                  </InterText>
+                  </GaretText>
 
                   <View className="mb-6">
-                    <InterText
-                      className="text-sm font-semibold mb-2"
-                      style={{ color: colors.foreground }}
+                    <GaretText
+                      className="font-semibold mb-3"
+                      style={{ fontSize: 16, color: colors.foreground }}
                     >
                       Group Code
-                    </InterText>
+                    </GaretText>
                     <Input
                       placeholder="ABCD"
                       value={joinCode}
                       onChangeText={setJoinCode}
                       autoCapitalize="characters"
                       maxLength={4}
-                      className="text-center text-2xl font-bold"
+                      textAlign="center"
+                      textAlignVertical="center"
+                      style={{
+                        fontSize: 28,
+                        fontWeight: 'bold',
+                        letterSpacing: 8,
+                        height: 56,
+                      }}
                     />
                   </View>
 
@@ -228,9 +236,12 @@ export default function LandingScreen() {
                       variant="gradient"
                       size="lg"
                     >
-                      <InterText className="text-white font-semibold text-lg">
+                      <GaretText
+                        className="text-white font-semibold"
+                        style={{ fontSize: 18 }}
+                      >
                         Join Now
-                      </InterText>
+                      </GaretText>
                     </Button>
 
                     <Button
@@ -241,12 +252,12 @@ export default function LandingScreen() {
                       variant="ghost"
                       size="lg"
                     >
-                      <InterText
-                        className="font-semibold text-base"
-                        style={{ color: colors.mutedForeground }}
+                      <GaretText
+                        className="font-semibold"
+                        style={{ fontSize: 16, color: colors.mutedForeground }}
                       >
                         Cancel
-                      </InterText>
+                      </GaretText>
                     </Button>
                   </View>
                 </View>

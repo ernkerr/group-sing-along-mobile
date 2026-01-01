@@ -31,13 +31,17 @@ import { ShareModal } from "@/components/ShareModal";
 import { PaywallModal } from "@/components/PaywallModal";
 import { SessionTimer } from "@/components/SessionTimer";
 import { MusicLoader } from "@/components/ui/MusicLoader";
+import { SongListItem } from "@/components/SongListItem";
+import { SongRequestItem } from "@/components/SongRequestItem";
 import { storage } from "@/services/storage";
 import { usePusher } from "@/hooks/usePusher";
 import { useSubscription } from "@/hooks/useSubscription";
+import { useResponsive } from "@/hooks/useResponsive";
 import { api } from "@/services/api";
 import type { RootStackParamList } from "@/types";
 import { useTheme } from "@/context/ThemeContext";
 import { SubscriptionTier } from "@/types/subscription";
+import { BRAND, GRADIENTS, GRAY } from "@/constants";
 
 import iconDark from "../assets/iconDark.png";
 
@@ -66,7 +70,8 @@ export default function GroupScreen() {
   const navigation = useNavigation();
   const { id: groupId } = route.params;
   const insets = useSafeAreaInsets();
-  const { colors } = useTheme();
+  const { colors, fontScale, increaseFontSize, decreaseFontSize, getScaledSize } = useTheme();
+  const { isTablet, isDesktop } = useResponsive();
   const [isHost, setIsHost] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -77,7 +82,9 @@ export default function GroupScreen() {
   const [albumCover, setAlbumCover] = useState("");
   const [memberCount, setMemberCount] = useState(0);
   const [hostLimit, setHostLimit] = useState(3); // Host's member limit (received via Pusher)
-  const [fontSize, setFontSize] = useState(16);
+
+  // Responsive content width
+  const contentMaxWidth = isDesktop ? 800 : isTablet ? 640 : undefined;
 
   // Song search state (for hosts)
   const [searchTerm, setSearchTerm] = useState("");
@@ -439,8 +446,8 @@ export default function GroupScreen() {
     navigation.goBack();
   };
 
-  const increaseFontSize = () => setFontSize((prev) => Math.min(prev + 2, 32));
-  const decreaseFontSize = () => setFontSize((prev) => Math.max(prev - 2, 10));
+  // Check if group is in empty state (no content to show)
+  const isEmptyState = !currentSong && !lyrics && searchResults.length === 0 && singerSearchResults.length === 0;
 
   // Search for songs (Deezer) - Host
   const handleSearch = async () => {
@@ -596,7 +603,12 @@ export default function GroupScreen() {
       style={{ backgroundColor: colors.background }}
       edges={["bottom"]}
     >
-      <ScrollView className="flex-1" showsVerticalScrollIndicator={false}>
+      <View style={{ flex: 1 }}>
+      <ScrollView
+        style={{ flex: 1 }}
+        contentContainerStyle={isEmptyState ? { flexGrow: 1 } : undefined}
+        showsVerticalScrollIndicator={false}
+      >
         <View style={{ backgroundColor: colors.background }}>
           {/* Main Content Container */}
           {/* Header with Gradient Background */}
@@ -685,8 +697,8 @@ export default function GroupScreen() {
             }}
           >
             <GaretText
-              className="text-lg font-medium"
-              style={{ color: colors.foreground }}
+              className="font-medium"
+              style={{ fontSize: getScaledSize(18), color: colors.foreground }}
             >
               Role:{" "}
               <GaretText className="font-semibold">
@@ -694,8 +706,8 @@ export default function GroupScreen() {
               </GaretText>
             </GaretText>
             <GaretText
-              className="text-lg font-medium"
-              style={{ color: colors.foreground }}
+              className="font-medium"
+              style={{ fontSize: getScaledSize(18), color: colors.foreground }}
             >
               Group Code:{" "}
               <GaretText className="font-semibold">{groupId}</GaretText>
@@ -713,9 +725,9 @@ export default function GroupScreen() {
 
           {/* Singer Search Section */}
           {!isHost && (
-            <View className="bg-white px-3">
-              <View className="flex-row gap-2">
-                <View className="">
+            <View className="px-6 py-4" style={{ backgroundColor: colors.card }}>
+              <View className="flex-row gap-2" style={{ alignItems: 'stretch' }}>
+                <View className="flex-1">
                   <Input
                     placeholder="Search for a song"
                     value={singerSearchTerm}
@@ -723,27 +735,24 @@ export default function GroupScreen() {
                     editable={!isSingerSearching}
                     returnKeyType="search"
                     onSubmitEditing={searchSongAsSinger}
-                    className="bg-white"
                     textAlign="center"
-                    textAlignVertical="center"
                     style={{
-                      backgroundColor: "#ffffff",
-                      borderColor: "#e5e7eb",
+                      backgroundColor: colors.card,
+                      borderColor: colors.border,
                       borderWidth: 1,
                       borderRadius: 8,
-                      height: 48,
-                      // fontSize: 16,
-                      paddingVertical: 12,
+                      height: getScaledSize(48),
+                      fontSize: getScaledSize(16),
                     }}
                   />
                 </View>
                 <LinearGradient
                   colors={["#A68BF7", "#C4B4FD"]}
                   start={{ x: 0, y: 0 }}
-                  end={{ x: 0, y: 0 }}
+                  end={{ x: 1, y: 0 }}
                   style={{
-                    borderRadius: 6,
-                    height: 48,
+                    borderRadius: 8,
+                    justifyContent: 'center',
                     opacity:
                       isSingerSearching || !singerSearchTerm.trim() ? 0.5 : 1,
                   }}
@@ -751,15 +760,21 @@ export default function GroupScreen() {
                   <Pressable
                     onPress={searchSongAsSinger}
                     disabled={isSingerSearching || !singerSearchTerm.trim()}
-                    className="px-4 flex-row items-center gap-2 justify-center"
-                    style={{ height: 48 }}
+                    className="flex-row items-center gap-2 justify-center"
+                    style={{
+                      paddingHorizontal: getScaledSize(16),
+                      height: getScaledSize(48),
+                    }}
                   >
                     {isSingerSearching ? (
                       <MusicLoader size="small" color="white" />
                     ) : (
                       <>
-                        <Search size={16} color="white" />
-                        <GaretText className="text-white font-semibold shadow-lg">
+                        <Search size={getScaledSize(16)} color="white" />
+                        <GaretText
+                          className="text-white font-semibold"
+                          style={{ fontSize: getScaledSize(14) }}
+                        >
                           Search
                         </GaretText>
                       </>
@@ -772,32 +787,29 @@ export default function GroupScreen() {
 
           {/* Singer Search Results */}
           {!isHost && singerSearchResults.length > 0 && (
-            <View className="bg-white px-1 pb-4">
-              <View className="bg-gray-50 rounded-lg border border-gray-200 max-h-64">
+            <View className="px-6 pb-4" style={{ backgroundColor: colors.card }}>
+              <View
+                className="rounded-lg max-h-64"
+                style={{ backgroundColor: GRAY[50], borderWidth: 1, borderColor: GRAY[200] }}
+              >
                 <ScrollView showsVerticalScrollIndicator={false}>
                   {singerSearchResults.map((result, index) => (
-                    <View
+                    <SongListItem
                       key={index}
-                      className="p-3 flex-row items-center justify-between border-b border-gray-200"
-                    >
-                      <GaretText className="text-sm flex-1">
-                        {result.display || `${result.title} - ${result.artist}`}
-                      </GaretText>
-                      <Pressable
-                        onPress={() =>
-                          requestSong(
-                            result.title,
-                            result.artist,
-                            result.album.cover || result.album.cover_medium
-                          )
-                        }
-                        className="bg-violet-400 px-3 py-2 rounded active:bg-violet-500"
-                      >
-                        <GaretText className="text-white text-xs font-semibold">
-                          Request
-                        </GaretText>
-                      </Pressable>
-                    </View>
+                      title={result.title}
+                      artist={result.artist}
+                      display={result.display}
+                      actionLabel="Request"
+                      showDivider={index < singerSearchResults.length - 1}
+                      scale={true}
+                      onPress={() =>
+                        requestSong(
+                          result.title,
+                          result.artist,
+                          result.album.cover || result.album.cover_medium
+                        )
+                      }
+                    />
                   ))}
                 </ScrollView>
               </View>
@@ -806,8 +818,8 @@ export default function GroupScreen() {
 
           {/* Host Search Section */}
           {isHost && (
-            <View className="bg-white px-6 py-4">
-              <View className="flex-row gap-2">
+            <View className="px-6 py-4" style={{ backgroundColor: colors.card }}>
+              <View className="flex-row gap-2" style={{ alignItems: 'stretch' }}>
                 <View className="flex-1">
                   <Input
                     placeholder="Search for a song"
@@ -816,17 +828,14 @@ export default function GroupScreen() {
                     editable={!isSearching}
                     returnKeyType="search"
                     onSubmitEditing={handleSearch}
-                    className="bg-white"
                     textAlign="center"
-                    textAlignVertical="center"
                     style={{
-                      backgroundColor: "#ffffff",
-                      borderColor: "#e5e7eb",
+                      backgroundColor: colors.card,
+                      borderColor: colors.border,
                       borderWidth: 1,
                       borderRadius: 8,
-                      height: 48,
-                      // fontSize: 16,
-                      paddingVertical: 12,
+                      height: getScaledSize(48),
+                      fontSize: getScaledSize(16),
                     }}
                   />
                 </View>
@@ -835,23 +844,29 @@ export default function GroupScreen() {
                   start={{ x: 0, y: 0 }}
                   end={{ x: 1, y: 0 }}
                   style={{
-                    borderRadius: 6,
-                    height: 48,
+                    borderRadius: 8,
+                    justifyContent: 'center',
                     opacity: isSearching || !searchTerm.trim() ? 0.5 : 1,
                   }}
                 >
                   <Pressable
                     onPress={handleSearch}
                     disabled={isSearching || !searchTerm.trim()}
-                    className="px-4 flex-row items-center gap-2 justify-center"
-                    style={{ height: 48 }}
+                    className="flex-row items-center gap-2 justify-center"
+                    style={{
+                      paddingHorizontal: getScaledSize(16),
+                      height: getScaledSize(48),
+                    }}
                   >
                     {isSearching ? (
                       <MusicLoader size="small" color="white" />
                     ) : (
                       <>
-                        <Search size={16} color="white" />
-                        <GaretText className="text-white font-semibold">
+                        <Search size={getScaledSize(16)} color="white" />
+                        <GaretText
+                          className="text-white font-semibold"
+                          style={{ fontSize: getScaledSize(14) }}
+                        >
                           Search
                         </GaretText>
                       </>
@@ -864,46 +879,68 @@ export default function GroupScreen() {
 
           {/* Host Search Results */}
           {isHost && searchResults.length > 0 && (
-            <View className="bg-white px-6 pb-4">
-              {searchResults.map((result, index) => (
-                <Pressable
-                  key={index}
-                  onPress={() => handleSelectSong(result)}
-                  className="p-4 rounded-md mb-1"
-                  style={({ pressed }) => ({
-                    backgroundColor: pressed ? "#c4b5fd" : "transparent",
-                  })}
-                >
-                  <GaretText className="text-base text-gray-900">
-                    {result.display || `${result.title} - ${result.artist}`}
-                  </GaretText>
-                </Pressable>
-              ))}
+            <View className="px-6 pb-4" style={{ backgroundColor: colors.card }}>
+              <View
+                className="rounded-lg"
+                style={{ backgroundColor: GRAY[50], borderWidth: 1, borderColor: GRAY[200] }}
+              >
+                {searchResults.map((result, index) => (
+                  <SongListItem
+                    key={index}
+                    title={result.title}
+                    artist={result.artist}
+                    display={result.display}
+                    actionLabel="Select"
+                    showDivider={index < searchResults.length - 1}
+                    scale={true}
+                    onPress={() => handleSelectSong(result)}
+                  />
+                ))}
+              </View>
             </View>
           )}
 
           {/* Host Song Requests Dropdown */}
           {isHost && (
-            <View className="bg-white px-6 py-4">
+            <View className="px-6 py-4" style={{ backgroundColor: colors.card }}>
               <Pressable
                 onPress={() => setIsRequestDropdownOpen(!isRequestDropdownOpen)}
-                className="border border-gray-200 px-4 py-3 flex-row items-center justify-between"
-                style={{ borderRadius: 8 }}
+                className="flex-row items-center justify-between"
+                style={{
+                  borderRadius: 8,
+                  borderWidth: 1,
+                  borderColor: GRAY[200],
+                  paddingHorizontal: getScaledSize(16),
+                  paddingVertical: getScaledSize(14),
+                }}
               >
-                <GaretText className="text-sm font-semibold text-gray-700">
+                <GaretText
+                  className="font-semibold"
+                  style={{ fontSize: getScaledSize(16), color: GRAY[700] }}
+                >
                   Song Requests
                 </GaretText>
                 <View className="flex-row items-center gap-2">
                   {songRequests.length > 0 && (
-                    <View className="bg-violet-500 rounded-full h-5 w-5 items-center justify-center">
-                      <GaretText className="text-white text-xs font-bold">
+                    <View
+                      className="rounded-full items-center justify-center"
+                      style={{
+                        backgroundColor: BRAND.primary,
+                        width: getScaledSize(24),
+                        height: getScaledSize(24),
+                      }}
+                    >
+                      <GaretText
+                        className="text-white font-bold"
+                        style={{ fontSize: getScaledSize(12) }}
+                      >
                         {songRequests.length}
                       </GaretText>
                     </View>
                   )}
                   <ChevronDown
-                    size={16}
-                    color="#374151"
+                    size={getScaledSize(18)}
+                    color={GRAY[700]}
                     style={{
                       transform: [
                         {
@@ -917,10 +954,16 @@ export default function GroupScreen() {
 
               {/* Dropdown Content */}
               {isRequestDropdownOpen && (
-                <View className="mt-2 bg-white" style={{ borderRadius: 8 }}>
+                <View
+                  className="mt-2"
+                  style={{ borderRadius: 8, backgroundColor: colors.card }}
+                >
                   {songRequests.length === 0 ? (
-                    <View className="p-4">
-                      <GaretText className="text-sm text-gray-500 text-center">
+                    <View style={{ padding: getScaledSize(16) }}>
+                      <GaretText
+                        className="text-center"
+                        style={{ fontSize: getScaledSize(14), color: GRAY[500] }}
+                      >
                         No song requests yet
                       </GaretText>
                     </View>
@@ -930,46 +973,16 @@ export default function GroupScreen() {
                       showsVerticalScrollIndicator={false}
                     >
                       {songRequests.map((request, index) => (
-                        <View
+                        <SongRequestItem
                           key={index}
-                          className="p-3 flex-row items-center gap-3 border-b border-gray-200"
-                        >
-                          {request.albumCover && (
-                            <Image
-                              source={{ uri: request.albumCover }}
-                              className="w-10 h-10 rounded"
-                              style={{ width: 40, height: 40 }}
-                            />
-                          )}
-                          <View className="flex-1">
-                            <GaretText className="text-sm font-medium">
-                              {request.title}
-                            </GaretText>
-                            <GaretText className="text-xs text-gray-500">
-                              {request.artist}
-                            </GaretText>
-                            {request.requestCount > 1 && (
-                              <GaretText className="text-xs text-violet-600 font-semibold">
-                                Requested {request.requestCount}x
-                              </GaretText>
-                            )}
-                          </View>
-                          <LinearGradient
-                            colors={["#A68BF7", "#C4B4FD"]}
-                            start={{ x: 0, y: 0 }}
-                            end={{ x: 1, y: 0 }}
-                            style={{ borderRadius: 6 }}
-                          >
-                            <Pressable
-                              onPress={() => acceptSongRequest(request)}
-                              className="px-3 py-2"
-                            >
-                              <GaretText className="text-white text-xs font-semibold">
-                                Accept
-                              </GaretText>
-                            </Pressable>
-                          </LinearGradient>
-                        </View>
+                          title={request.title}
+                          artist={request.artist}
+                          albumCover={request.albumCover}
+                          requestCount={request.requestCount}
+                          showDivider={index < songRequests.length - 1}
+                          scale={true}
+                          onAccept={() => acceptSongRequest(request)}
+                        />
                       ))}
                     </ScrollView>
                   )}
@@ -979,43 +992,71 @@ export default function GroupScreen() {
           )}
 
           {/* Lyrics Section */}
-          <View className="bg-white px-6 py-4 pb-6">
+          <View className="px-6 py-4 pb-6" style={{ backgroundColor: colors.card }}>
             {/* Lyrics Header with Font Controls */}
             <View className="flex-row items-center justify-between mb-3">
-              <GaretText className="text-base font-semibold text-gray-900">
+              <GaretText
+                className="font-semibold"
+                style={{ fontSize: getScaledSize(16), color: colors.foreground }}
+              >
                 Lyrics:
               </GaretText>
-              <View className="flex-row gap-2">
+              <View className="flex-row gap-3">
                 <Pressable
                   onPress={decreaseFontSize}
-                  className="w-8 h-8 border border-gray-300 rounded items-center justify-center active:bg-gray-100"
+                  className="items-center justify-center active:bg-gray-100"
+                  style={{
+                    width: getScaledSize(40),
+                    height: getScaledSize(40),
+                    borderWidth: 1,
+                    borderColor: GRAY[300],
+                    borderRadius: 8,
+                  }}
                 >
-                  <Minus size={16} color="#374151" />
+                  <Minus size={getScaledSize(20)} color={GRAY[700]} />
                 </Pressable>
                 <Pressable
                   onPress={increaseFontSize}
-                  className="w-8 h-8 border border-gray-300 rounded items-center justify-center active:bg-gray-100"
+                  className="items-center justify-center active:bg-gray-100"
+                  style={{
+                    width: getScaledSize(40),
+                    height: getScaledSize(40),
+                    borderWidth: 1,
+                    borderColor: GRAY[300],
+                    borderRadius: 8,
+                  }}
                 >
-                  <Plus size={16} color="#374151" />
+                  <Plus size={getScaledSize(20)} color={GRAY[700]} />
                 </Pressable>
               </View>
             </View>
 
             {/* Current Song Display */}
             {currentSong && (
-              <View className="flex-row items-center gap-3 mb-4 pb-3 border-b border-gray-200">
+              <View
+                className="flex-row items-center gap-4 mb-4 pb-4"
+                style={{ borderBottomWidth: 1, borderBottomColor: GRAY[200] }}
+              >
                 {albumCover && (
                   <Image
                     source={{ uri: albumCover }}
-                    className="w-12 h-12 rounded-lg"
-                    style={{ width: 50, height: 50 }}
+                    style={{
+                      width: getScaledSize(80),
+                      height: getScaledSize(80),
+                      borderRadius: 8,
+                    }}
                   />
                 )}
                 <View className="flex-1">
-                  <GaretText className="text-lg font-semibold text-gray-900">
+                  <GaretText
+                    className="font-semibold"
+                    style={{ fontSize: getScaledSize(20), color: colors.foreground }}
+                  >
                     {currentSong}
                   </GaretText>
-                  <GaretText className="text-sm text-gray-500">
+                  <GaretText
+                    style={{ fontSize: getScaledSize(16), color: GRAY[500] }}
+                  >
                     {currentArtist}
                   </GaretText>
                 </View>
@@ -1031,26 +1072,31 @@ export default function GroupScreen() {
             >
               {isSearching ? (
                 <View className="flex-1 items-center justify-center">
-                  <MusicLoader size="large" color="#A68BF7" />
-                  <GaretText className="text-gray-400 mt-4">
+                  <MusicLoader size="large" color={BRAND.primary} />
+                  <GaretText
+                    className="mt-4"
+                    style={{ fontSize: getScaledSize(14), color: GRAY[400] }}
+                  >
                     Searching for songs...
                   </GaretText>
                 </View>
               ) : isFetchingLyrics ? (
                 <View className="flex-1 items-center justify-center">
-                  <MusicLoader size="large" color="#A68BF7" />
-
-                  <GaretText className="text-gray-400 mt-4">
+                  <MusicLoader size="large" color={BRAND.primary} />
+                  <GaretText
+                    className="mt-4"
+                    style={{ fontSize: getScaledSize(14), color: GRAY[400] }}
+                  >
                     Loading lyrics...
                   </GaretText>
                 </View>
               ) : (
                 <GaretText
                   style={{
-                    fontSize,
-                    lineHeight: fontSize * 1.8,
+                    fontSize: getScaledSize(16),
+                    lineHeight: getScaledSize(16) * 1.8,
+                    color: colors.foreground,
                   }}
-                  className="text-gray-900"
                 >
                   {lyrics || "Waiting for the Host to select a song..."}
                 </GaretText>
@@ -1058,31 +1104,43 @@ export default function GroupScreen() {
             </View>
           </View>
 
-          {/* Share Button */}
-          <Pressable
-            onPress={handleInvite}
-            disabled={!isHost}
-            className="mx-6 mt-6 bg-violet-300 px-4 py-3 rounded-lg flex-row items-center justify-center gap-2 shadow-lg active:bg-violet-400"
-          >
-            <Share2 size={16} color="white" />
-            <GaretText className="text-white font-semibold">
-              {isHost ? "Share" : "Ask host to share"}
-            </GaretText>
-          </Pressable>
-
-          {/* Leave Group Button */}
-          <Pressable
-            onPress={handleLeaveGroup}
-            className="mx-6 my-6 border border-violet-300 px-4 py-3 rounded-lg items-center active:bg-gray-100"
-          >
-            <GaretText className="text-violet-400 font-semibold">
-              Leave Group
-            </GaretText>
-          </Pressable>
-
-          {/* Bottom spacing */}
-          <View style={{ height: 40 }} />
         </View>
+
+        {/* Spacer to push buttons down when empty */}
+        {isEmptyState && <View style={{ flex: 1 }} />}
+
+        {/* Share Button */}
+        <Pressable
+          onPress={handleInvite}
+          disabled={!isHost}
+          className="mx-6 mt-6 px-4 py-4 rounded-lg flex-row items-center justify-center gap-2 shadow-lg active:opacity-80"
+          style={{ backgroundColor: BRAND.primaryLight }}
+        >
+          <Share2 size={getScaledSize(18)} color="white" />
+          <GaretText
+            className="text-white font-semibold"
+            style={{ fontSize: getScaledSize(16) }}
+          >
+            {isHost ? "Share" : "Ask host to share"}
+          </GaretText>
+        </Pressable>
+
+        {/* Leave Group Button */}
+        <Pressable
+          onPress={handleLeaveGroup}
+          className="mx-6 my-6 px-4 py-4 rounded-lg items-center active:bg-gray-100"
+          style={{ borderWidth: 1, borderColor: BRAND.primaryLight }}
+        >
+          <GaretText
+            className="font-semibold"
+            style={{ fontSize: getScaledSize(16), color: BRAND.accent }}
+          >
+            Leave Group
+          </GaretText>
+        </Pressable>
+
+        {/* Bottom spacing */}
+        <View style={{ height: 40 }} />
       </ScrollView>
 
       {/* Share Modal */}
@@ -1161,6 +1219,7 @@ export default function GroupScreen() {
           </Pressable>
         </View>
       </Modal>
+      </View>
     </SafeAreaView>
   );
 }

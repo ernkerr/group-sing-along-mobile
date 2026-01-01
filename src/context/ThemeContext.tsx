@@ -4,8 +4,11 @@ import React, {
   ReactNode,
   useState,
   useEffect,
+  useCallback,
 } from "react";
 import { Appearance } from "react-native";
+import AsyncStorage from "@react-native-async-storage/async-storage";
+import { FONT_SCALE } from "@/constants";
 
 type ColorScheme = "light" | "dark";
 
@@ -30,6 +33,10 @@ interface ThemeColors {
 interface ThemeContextType {
   colors: ThemeColors;
   colorScheme: ColorScheme;
+  fontScale: number;
+  increaseFontSize: () => void;
+  decreaseFontSize: () => void;
+  getScaledSize: (baseSize: number) => number;
 }
 
 const lightColors: ThemeColors = {
@@ -74,10 +81,13 @@ interface ThemeProviderProps {
   children: ReactNode;
 }
 
+const FONT_SCALE_KEY = "@font_scale";
+
 export function ThemeProvider({ children }: ThemeProviderProps) {
   const [colorScheme, setColorScheme] = useState<ColorScheme>(
     Appearance.getColorScheme() === "dark" ? "dark" : "light"
   );
+  const [fontScale, setFontScale] = useState<number>(FONT_SCALE.default);
 
   useEffect(() => {
     const subscription = Appearance.addChangeListener(
@@ -90,10 +100,51 @@ export function ThemeProvider({ children }: ThemeProviderProps) {
     return () => subscription.remove();
   }, []);
 
+  useEffect(() => {
+    AsyncStorage.getItem(FONT_SCALE_KEY).then((value) => {
+      if (value) {
+        const parsed = parseFloat(value);
+        if (!isNaN(parsed)) {
+          setFontScale(parsed);
+        }
+      }
+    });
+  }, []);
+
+  const increaseFontSize = useCallback(() => {
+    setFontScale((prev) => {
+      const next = Math.min(prev + FONT_SCALE.step, FONT_SCALE.max);
+      AsyncStorage.setItem(FONT_SCALE_KEY, next.toString());
+      return next;
+    });
+  }, []);
+
+  const decreaseFontSize = useCallback(() => {
+    setFontScale((prev) => {
+      const next = Math.max(prev - FONT_SCALE.step, FONT_SCALE.min);
+      AsyncStorage.setItem(FONT_SCALE_KEY, next.toString());
+      return next;
+    });
+  }, []);
+
+  const getScaledSize = useCallback(
+    (baseSize: number) => Math.round(baseSize * fontScale),
+    [fontScale]
+  );
+
   const colors = colorScheme === "dark" ? darkColors : lightColors;
 
   return (
-    <ThemeContext.Provider value={{ colors, colorScheme }}>
+    <ThemeContext.Provider
+      value={{
+        colors,
+        colorScheme,
+        fontScale,
+        increaseFontSize,
+        decreaseFontSize,
+        getScaledSize,
+      }}
+    >
       {children}
     </ThemeContext.Provider>
   );

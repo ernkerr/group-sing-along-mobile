@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useMemo } from "react";
 import { TextInput, View, Text, Platform, TextStyle } from "react-native";
 import { cn } from "@/utils/cn";
 import { useTheme } from "@/context/ThemeContext";
@@ -27,6 +27,7 @@ interface InputProps {
   textAlignVertical?: "auto" | "top" | "bottom" | "center";
   style?: TextStyle;
   height?: InputHeight;
+  scale?: boolean; // Enable responsive font scaling
 }
 
 const heightValues: Record<InputHeight, number> = {
@@ -69,8 +70,9 @@ export function Input({
   textAlignVertical = "center",
   style,
   height = "default",
+  scale = false,
 }: InputProps) {
-  const { colors, colorScheme } = useTheme();
+  const { colors, colorScheme, getScaledSize } = useTheme();
 
   const handleChangeText = (text: string) => {
     if (onChangeText) {
@@ -83,6 +85,23 @@ export function Input({
 
   // Handle secureTextEntry from type prop
   const isSecure = secureTextEntry || type === "password";
+
+  // Calculate responsive height with min/max constraints
+  const baseHeight = typeof style?.height === 'number' ? style.height : heightValues[height];
+  const scaledHeight = getScaledSize(baseHeight);
+  // Min height: 44px (to prevent text cutoff), Max height: 80px
+  const constrainedHeight = Math.min(Math.max(scaledHeight, 44), 80);
+
+  // Calculate scaled fontSize when scale prop is enabled
+  const computedFontSize = useMemo(() => {
+    if (!scale || !style?.fontSize || typeof style.fontSize !== 'number') {
+      return style?.fontSize;
+    }
+    const scaledFontSize = getScaledSize(style.fontSize);
+    // Constrain fontSize to prevent it from getting too large and being cut off
+    // Max at 20px to ensure text doesn't overflow the input container
+    return Math.min(scaledFontSize, 20);
+  }, [scale, style?.fontSize, getScaledSize]);
 
   return (
     <View className="w-full">
@@ -101,8 +120,9 @@ export function Input({
             borderColor: colors.border,
             borderWidth: 1,
             borderRadius: 6,
-            height: style?.height ?? heightValues[height],
+            height: constrainedHeight,
             justifyContent: "center",
+            paddingHorizontal: 12,
           },
           shadowStyles,
         ]}
@@ -118,15 +138,13 @@ export function Input({
             {
               color: colors.foreground,
               fontFamily: "Garet",
-              paddingHorizontal: 12,
-              paddingVertical: 0,
+              padding: 0,
               margin: 0,
               textAlign,
-              textAlignVertical,
-              fontSize: style?.fontSize,
+              textAlignVertical: textAlignVertical || "center",
+              fontSize: computedFontSize,
               fontWeight: style?.fontWeight,
               letterSpacing: style?.letterSpacing,
-              lineHeight: style?.fontSize ? style.fontSize * 1.2 : undefined,
               includeFontPadding: false,
             },
           ]}

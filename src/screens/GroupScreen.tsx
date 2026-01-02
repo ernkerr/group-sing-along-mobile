@@ -70,7 +70,13 @@ export default function GroupScreen() {
   const navigation = useNavigation();
   const { id: groupId } = route.params;
   const insets = useSafeAreaInsets();
-  const { colors, fontScale, increaseFontSize, decreaseFontSize, getScaledSize } = useTheme();
+  const {
+    colors,
+    fontScale,
+    increaseFontSize,
+    decreaseFontSize,
+    getScaledSize,
+  } = useTheme();
   const { isTablet, isDesktop } = useResponsive();
   const [isHost, setIsHost] = useState(false);
   const [loading, setLoading] = useState(true);
@@ -447,7 +453,11 @@ export default function GroupScreen() {
   };
 
   // Check if group is in empty state (no content to show)
-  const isEmptyState = !currentSong && !lyrics && searchResults.length === 0 && singerSearchResults.length === 0;
+  const isEmptyState =
+    !currentSong &&
+    !lyrics &&
+    searchResults.length === 0 &&
+    singerSearchResults.length === 0;
 
   // Search for songs (Deezer) - Host
   const handleSearch = async () => {
@@ -604,621 +614,685 @@ export default function GroupScreen() {
       edges={["bottom"]}
     >
       <View style={{ flex: 1 }}>
-      <ScrollView
-        style={{ flex: 1 }}
-        contentContainerStyle={isEmptyState ? { flexGrow: 1 } : undefined}
-        showsVerticalScrollIndicator={false}
-      >
-        <View style={{ backgroundColor: colors.background }}>
-          {/* Main Content Container */}
-          {/* Header with Gradient Background */}
-          <View
-            style={{
-              width: "100%",
-            }}
-          >
-            <LinearGradient
-              colors={["#A68BF7", "#C4B4FD"]}
-              start={{ x: 0, y: 0 }}
-              end={{ x: 1, y: 0 }}
-              style={{
-                position: "absolute",
-                left: 0,
-                right: 0,
-                top: 0,
-                height: insets.top + 100,
-              }}
-            />
+        <ScrollView
+          style={{ flex: 1 }}
+          contentContainerStyle={isEmptyState ? { flexGrow: 1 } : undefined}
+          showsVerticalScrollIndicator={false}
+        >
+          <View style={{ backgroundColor: colors.background }}>
+            {/* Main Content Container */}
+            {/* Header with Gradient Background */}
             <View
               style={{
-                paddingHorizontal: 24,
-                paddingTop: insets.top + 8,
-                paddingBottom: 24,
+                width: "100%",
               }}
             >
+              <LinearGradient
+                colors={["#A68BF7", "#C4B4FD"]}
+                start={{ x: 0, y: 0 }}
+                end={{ x: 1, y: 0 }}
+                style={{
+                  position: "absolute",
+                  left: 0,
+                  right: 0,
+                  top: 0,
+                  height: insets.top + 100,
+                }}
+              />
               <View
                 style={{
-                  flexDirection: "row",
-                  alignItems: "center",
-                  justifyContent: "space-between",
+                  paddingHorizontal: 24,
+                  paddingTop: insets.top + 8,
+                  paddingBottom: 24,
                 }}
               >
                 <View
-                  style={{ flexDirection: "row", alignItems: "center", gap: 8 }}
-                >
-                  <Image
-                    source={iconDark}
-                    style={{ width: 25, height: 25 }}
-                    resizeMode="contain"
-                  />
-                  <RocaText
-                    style={{ fontSize: 24, color: "white", fontWeight: "bold" }}
-                  >
-                    Group Sing Along
-                  </RocaText>
-                </View>
-                <Pressable
-                  onPress={handleInvite}
-                  disabled={!isHost}
                   style={{
                     flexDirection: "row",
                     alignItems: "center",
-                    gap: 6,
-                    paddingHorizontal: 16,
-                    paddingVertical: 8,
-                    borderRadius: 6,
-                    backgroundColor: "#C4B4FD",
-                    ...Platform.select({
-                      ios: {
-                        shadowColor: "#000",
-                        shadowOffset: { width: 0, height: 2 },
-                        shadowOpacity: 0.15,
-                        shadowRadius: 3,
-                      },
-                    }),
+                    justifyContent: "space-between",
                   }}
                 >
-                  <Users size={16} color="white" />
-                  <GaretText
-                    style={{ color: "white", fontSize: 14, fontWeight: "bold" }}
-                  >
-                    {memberCount} {memberCount === 1 ? "member" : "members"}
-                  </GaretText>
-                </Pressable>
-              </View>
-            </View>
-          </View>
-
-          {/* Info Rows */}
-          <View
-            className="px-6 py-4 flex-row items-center justify-between"
-            style={{
-              backgroundColor: colors.card,
-            }}
-          >
-            <GaretText
-              className="font-medium"
-              style={{ fontSize: getScaledSize(18), color: colors.foreground }}
-            >
-              Role:{" "}
-              <GaretText className="font-semibold">
-                {isHost ? "Host" : "Singer"}
-              </GaretText>
-            </GaretText>
-            <GaretText
-              className="font-medium"
-              style={{ fontSize: getScaledSize(18), color: colors.foreground }}
-            >
-              Group Code:{" "}
-              <GaretText className="font-semibold">{groupId}</GaretText>
-            </GaretText>
-          </View>
-
-          {/* EVENT Tier Timer Display */}
-          {tier === SubscriptionTier.EVENT && isHost && sessionExpiresAt && (
-            <SessionTimer
-              sessionExpiresAt={sessionExpiresAt}
-              groupId={groupId}
-              onSessionExpired={handleSessionExpiredReceived}
-            />
-          )}
-
-          {/* Singer Search Section */}
-          {!isHost && (
-            <View className="px-6 py-4" style={{ backgroundColor: colors.card }}>
-              <View className="flex-row gap-2" style={{ alignItems: 'stretch' }}>
-                <View className="flex-1">
-                  <Input
-                    placeholder="Search for a song"
-                    value={singerSearchTerm}
-                    onChangeText={setSingerSearchTerm}
-                    editable={!isSingerSearching}
-                    returnKeyType="search"
-                    onSubmitEditing={searchSongAsSinger}
-                    textAlign="center"
+                  <View
                     style={{
-                      backgroundColor: colors.card,
-                      borderColor: colors.border,
-                      borderWidth: 1,
-                      borderRadius: 8,
-                      height: getScaledSize(48),
-                      fontSize: getScaledSize(16),
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 8,
                     }}
-                  />
-                </View>
-                <LinearGradient
-                  colors={["#A68BF7", "#C4B4FD"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={{
-                    borderRadius: 8,
-                    justifyContent: 'center',
-                    opacity:
-                      isSingerSearching || !singerSearchTerm.trim() ? 0.5 : 1,
-                  }}
-                >
+                  >
+                    <Image
+                      source={iconDark}
+                      style={{ width: 25, height: 25 }}
+                      resizeMode="contain"
+                    />
+                    <RocaText
+                      style={{
+                        fontSize: 24,
+                        color: "white",
+                        fontWeight: "bold",
+                      }}
+                    >
+                      Group Sing Along
+                    </RocaText>
+                  </View>
                   <Pressable
-                    onPress={searchSongAsSinger}
-                    disabled={isSingerSearching || !singerSearchTerm.trim()}
-                    className="flex-row items-center gap-2 justify-center"
+                    onPress={handleInvite}
+                    disabled={!isHost}
                     style={{
-                      paddingHorizontal: getScaledSize(16),
-                      height: getScaledSize(48),
+                      flexDirection: "row",
+                      alignItems: "center",
+                      gap: 6,
+                      paddingHorizontal: 16,
+                      paddingVertical: 8,
+                      borderRadius: 6,
+                      backgroundColor: "#C4B4FD",
+                      ...Platform.select({
+                        ios: {
+                          shadowColor: "#000",
+                          shadowOffset: { width: 0, height: 2 },
+                          shadowOpacity: 0.15,
+                          shadowRadius: 3,
+                        },
+                      }),
                     }}
                   >
-                    {isSingerSearching ? (
-                      <MusicLoader size="small" color="white" />
-                    ) : (
-                      <>
-                        <Search size={getScaledSize(16)} color="white" />
-                        <GaretText
-                          className="text-white font-semibold"
-                          style={{ fontSize: getScaledSize(14) }}
-                        >
-                          Search
-                        </GaretText>
-                      </>
-                    )}
+                    <Users size={16} color="white" />
+                    <GaretText
+                      style={{
+                        color: "white",
+                        fontSize: 14,
+                        fontWeight: "bold",
+                      }}
+                    >
+                      {memberCount} {memberCount === 1 ? "member" : "members"}
+                    </GaretText>
                   </Pressable>
-                </LinearGradient>
+                </View>
               </View>
             </View>
-          )}
 
-          {/* Singer Search Results */}
-          {!isHost && singerSearchResults.length > 0 && (
-            <View className="px-6 pb-4" style={{ backgroundColor: colors.card }}>
-              <View
-                className="rounded-lg max-h-64"
-                style={{ backgroundColor: GRAY[50], borderWidth: 1, borderColor: GRAY[200] }}
+            {/* Info Rows */}
+            <View
+              className="px-6 py-4 flex-row items-center justify-between"
+              style={{
+                backgroundColor: colors.card,
+                flexWrap: "wrap",
+                gap: 12,
+              }}
+            >
+              <GaretText
+                className="font-medium"
+                style={{
+                  fontSize: getScaledSize(18),
+                  color: colors.foreground,
+                }}
               >
-                <ScrollView showsVerticalScrollIndicator={false}>
-                  {singerSearchResults.map((result, index) => (
+                Role:{" "}
+                <GaretText className="font-semibold">
+                  {isHost ? "Host" : "Singer"}
+                </GaretText>
+              </GaretText>
+              <GaretText
+                className="font-medium"
+                style={{
+                  fontSize: getScaledSize(18),
+                  color: colors.foreground,
+                }}
+              >
+                Group Code:{" "}
+                <GaretText className="font-semibold">{groupId}</GaretText>
+              </GaretText>
+            </View>
+
+            {/* EVENT Tier Timer Display */}
+            {tier === SubscriptionTier.EVENT && isHost && sessionExpiresAt && (
+              <SessionTimer
+                sessionExpiresAt={sessionExpiresAt}
+                groupId={groupId}
+                onSessionExpired={handleSessionExpiredReceived}
+              />
+            )}
+
+            {/* Singer Search Section */}
+            {!isHost && (
+              <View
+                className="px-6 py-4"
+                style={{ backgroundColor: colors.card }}
+              >
+                <View
+                  className="flex-row gap-2"
+                  style={{ alignItems: "stretch" }}
+                >
+                  <View className="flex-1">
+                    <Input
+                      placeholder="Search for a song"
+                      value={singerSearchTerm}
+                      onChangeText={setSingerSearchTerm}
+                      editable={!isSingerSearching}
+                      returnKeyType="search"
+                      onSubmitEditing={searchSongAsSinger}
+                      scale={true}
+                      style={{
+                        backgroundColor: colors.card,
+                        borderColor: colors.border,
+                        borderWidth: 1,
+                        borderRadius: 8,
+                        height: 48,
+                        fontSize: 16,
+                      }}
+                    />
+                  </View>
+                  <LinearGradient
+                    colors={["#A68BF7", "#C4B4FD"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={{
+                      borderRadius: 8,
+                      justifyContent: "center",
+                      opacity:
+                        isSingerSearching || !singerSearchTerm.trim() ? 0.5 : 1,
+                    }}
+                  >
+                    <Pressable
+                      onPress={searchSongAsSinger}
+                      disabled={isSingerSearching || !singerSearchTerm.trim()}
+                      className="flex-row items-center gap-2 justify-center"
+                      style={{
+                        paddingHorizontal: getScaledSize(16),
+                        height: getScaledSize(48),
+                      }}
+                    >
+                      {isSingerSearching ? (
+                        <MusicLoader size="small" color="white" />
+                      ) : (
+                        <>
+                          <Search size={getScaledSize(16)} color="white" />
+                          <GaretText
+                            className="text-white font-semibold"
+                            style={{ fontSize: getScaledSize(14) }}
+                          >
+                            Search
+                          </GaretText>
+                        </>
+                      )}
+                    </Pressable>
+                  </LinearGradient>
+                </View>
+              </View>
+            )}
+
+            {/* Singer Search Results */}
+            {!isHost && singerSearchResults.length > 0 && (
+              <View
+                className="px-6 pb-4"
+                style={{ backgroundColor: colors.card }}
+              >
+                <View
+                  className="rounded-lg max-h-64"
+                  style={{
+                    backgroundColor: GRAY[50],
+                    borderWidth: 1,
+                    borderColor: GRAY[200],
+                  }}
+                >
+                  <ScrollView showsVerticalScrollIndicator={false}>
+                    {singerSearchResults.map((result, index) => (
+                      <SongListItem
+                        key={index}
+                        title={result.title}
+                        artist={result.artist}
+                        display={result.display}
+                        actionLabel="Request"
+                        showDivider={index < singerSearchResults.length - 1}
+                        scale={true}
+                        onPress={() =>
+                          requestSong(
+                            result.title,
+                            result.artist,
+                            result.album.cover || result.album.cover_medium
+                          )
+                        }
+                      />
+                    ))}
+                  </ScrollView>
+                </View>
+              </View>
+            )}
+
+            {/* Host Search Section */}
+            {isHost && (
+              <View
+                className="px-6 py-4"
+                style={{ backgroundColor: colors.card }}
+              >
+                <View
+                  className="flex-row gap-2"
+                  style={{ alignItems: "stretch" }}
+                >
+                  <View className="flex-1">
+                    <Input
+                      placeholder="Search for a song"
+                      value={searchTerm}
+                      onChangeText={setSearchTerm}
+                      editable={!isSearching}
+                      returnKeyType="search"
+                      onSubmitEditing={handleSearch}
+                      scale={true}
+                      style={{
+                        backgroundColor: colors.card,
+                        borderColor: colors.border,
+                        borderWidth: 1,
+                        borderRadius: 8,
+                        height: 48,
+                        fontSize: 16,
+                      }}
+                    />
+                  </View>
+                  <LinearGradient
+                    colors={["#A68BF7", "#C4B4FD"]}
+                    start={{ x: 0, y: 0 }}
+                    end={{ x: 1, y: 0 }}
+                    style={{
+                      borderRadius: 8,
+                      justifyContent: "center",
+                      opacity: isSearching || !searchTerm.trim() ? 0.5 : 1,
+                    }}
+                  >
+                    <Pressable
+                      onPress={handleSearch}
+                      disabled={isSearching || !searchTerm.trim()}
+                      className="flex-row items-center gap-2 justify-center"
+                      style={{
+                        paddingHorizontal: getScaledSize(16),
+                        height: getScaledSize(48),
+                      }}
+                    >
+                      {isSearching ? (
+                        <MusicLoader size="small" color="white" />
+                      ) : (
+                        <>
+                          <Search size={getScaledSize(16)} color="white" />
+                          <GaretText
+                            className="text-white font-semibold"
+                            style={{ fontSize: getScaledSize(14) }}
+                          >
+                            Search
+                          </GaretText>
+                        </>
+                      )}
+                    </Pressable>
+                  </LinearGradient>
+                </View>
+              </View>
+            )}
+
+            {/* Host Search Results */}
+            {isHost && searchResults.length > 0 && (
+              <View
+                className="px-6 pb-4"
+                style={{ backgroundColor: colors.card }}
+              >
+                <View
+                  className="rounded-lg"
+                  style={{
+                    backgroundColor: GRAY[50],
+                    borderWidth: 1,
+                    borderColor: GRAY[200],
+                  }}
+                >
+                  {searchResults.map((result, index) => (
                     <SongListItem
                       key={index}
                       title={result.title}
                       artist={result.artist}
                       display={result.display}
-                      actionLabel="Request"
-                      showDivider={index < singerSearchResults.length - 1}
+                      actionLabel="Select"
+                      showDivider={index < searchResults.length - 1}
                       scale={true}
-                      onPress={() =>
-                        requestSong(
-                          result.title,
-                          result.artist,
-                          result.album.cover || result.album.cover_medium
-                        )
-                      }
+                      onPress={() => handleSelectSong(result)}
                     />
                   ))}
-                </ScrollView>
-              </View>
-            </View>
-          )}
-
-          {/* Host Search Section */}
-          {isHost && (
-            <View className="px-6 py-4" style={{ backgroundColor: colors.card }}>
-              <View className="flex-row gap-2" style={{ alignItems: 'stretch' }}>
-                <View className="flex-1">
-                  <Input
-                    placeholder="Search for a song"
-                    value={searchTerm}
-                    onChangeText={setSearchTerm}
-                    editable={!isSearching}
-                    returnKeyType="search"
-                    onSubmitEditing={handleSearch}
-                    textAlign="center"
-                    style={{
-                      backgroundColor: colors.card,
-                      borderColor: colors.border,
-                      borderWidth: 1,
-                      borderRadius: 8,
-                      height: getScaledSize(48),
-                      fontSize: getScaledSize(16),
-                    }}
-                  />
-                </View>
-                <LinearGradient
-                  colors={["#A68BF7", "#C4B4FD"]}
-                  start={{ x: 0, y: 0 }}
-                  end={{ x: 1, y: 0 }}
-                  style={{
-                    borderRadius: 8,
-                    justifyContent: 'center',
-                    opacity: isSearching || !searchTerm.trim() ? 0.5 : 1,
-                  }}
-                >
-                  <Pressable
-                    onPress={handleSearch}
-                    disabled={isSearching || !searchTerm.trim()}
-                    className="flex-row items-center gap-2 justify-center"
-                    style={{
-                      paddingHorizontal: getScaledSize(16),
-                      height: getScaledSize(48),
-                    }}
-                  >
-                    {isSearching ? (
-                      <MusicLoader size="small" color="white" />
-                    ) : (
-                      <>
-                        <Search size={getScaledSize(16)} color="white" />
-                        <GaretText
-                          className="text-white font-semibold"
-                          style={{ fontSize: getScaledSize(14) }}
-                        >
-                          Search
-                        </GaretText>
-                      </>
-                    )}
-                  </Pressable>
-                </LinearGradient>
-              </View>
-            </View>
-          )}
-
-          {/* Host Search Results */}
-          {isHost && searchResults.length > 0 && (
-            <View className="px-6 pb-4" style={{ backgroundColor: colors.card }}>
-              <View
-                className="rounded-lg"
-                style={{ backgroundColor: GRAY[50], borderWidth: 1, borderColor: GRAY[200] }}
-              >
-                {searchResults.map((result, index) => (
-                  <SongListItem
-                    key={index}
-                    title={result.title}
-                    artist={result.artist}
-                    display={result.display}
-                    actionLabel="Select"
-                    showDivider={index < searchResults.length - 1}
-                    scale={true}
-                    onPress={() => handleSelectSong(result)}
-                  />
-                ))}
-              </View>
-            </View>
-          )}
-
-          {/* Host Song Requests Dropdown */}
-          {isHost && (
-            <View className="px-6 py-4" style={{ backgroundColor: colors.card }}>
-              <Pressable
-                onPress={() => setIsRequestDropdownOpen(!isRequestDropdownOpen)}
-                className="flex-row items-center justify-between"
-                style={{
-                  borderRadius: 8,
-                  borderWidth: 1,
-                  borderColor: GRAY[200],
-                  paddingHorizontal: getScaledSize(16),
-                  paddingVertical: getScaledSize(14),
-                }}
-              >
-                <GaretText
-                  className="font-semibold"
-                  style={{ fontSize: getScaledSize(16), color: GRAY[700] }}
-                >
-                  Song Requests
-                </GaretText>
-                <View className="flex-row items-center gap-2">
-                  {songRequests.length > 0 && (
-                    <View
-                      className="rounded-full items-center justify-center"
-                      style={{
-                        backgroundColor: BRAND.primary,
-                        width: getScaledSize(24),
-                        height: getScaledSize(24),
-                      }}
-                    >
-                      <GaretText
-                        className="text-white font-bold"
-                        style={{ fontSize: getScaledSize(12) }}
-                      >
-                        {songRequests.length}
-                      </GaretText>
-                    </View>
-                  )}
-                  <ChevronDown
-                    size={getScaledSize(18)}
-                    color={GRAY[700]}
-                    style={{
-                      transform: [
-                        {
-                          rotate: isRequestDropdownOpen ? "180deg" : "0deg",
-                        },
-                      ],
-                    }}
-                  />
-                </View>
-              </Pressable>
-
-              {/* Dropdown Content */}
-              {isRequestDropdownOpen && (
-                <View
-                  className="mt-2"
-                  style={{ borderRadius: 8, backgroundColor: colors.card }}
-                >
-                  {songRequests.length === 0 ? (
-                    <View style={{ padding: getScaledSize(16) }}>
-                      <GaretText
-                        className="text-center"
-                        style={{ fontSize: getScaledSize(14), color: GRAY[500] }}
-                      >
-                        No song requests yet
-                      </GaretText>
-                    </View>
-                  ) : (
-                    <ScrollView
-                      className="max-h-80"
-                      showsVerticalScrollIndicator={false}
-                    >
-                      {songRequests.map((request, index) => (
-                        <SongRequestItem
-                          key={index}
-                          title={request.title}
-                          artist={request.artist}
-                          albumCover={request.albumCover}
-                          requestCount={request.requestCount}
-                          showDivider={index < songRequests.length - 1}
-                          scale={true}
-                          onAccept={() => acceptSongRequest(request)}
-                        />
-                      ))}
-                    </ScrollView>
-                  )}
-                </View>
-              )}
-            </View>
-          )}
-
-          {/* Lyrics Section */}
-          <View className="px-6 py-4 pb-6" style={{ backgroundColor: colors.card }}>
-            {/* Lyrics Header with Font Controls */}
-            <View className="flex-row items-center justify-between mb-3">
-              <GaretText
-                className="font-semibold"
-                style={{ fontSize: getScaledSize(16), color: colors.foreground }}
-              >
-                Lyrics:
-              </GaretText>
-              <View className="flex-row gap-3">
-                <Pressable
-                  onPress={decreaseFontSize}
-                  className="items-center justify-center active:bg-gray-100"
-                  style={{
-                    width: getScaledSize(40),
-                    height: getScaledSize(40),
-                    borderWidth: 1,
-                    borderColor: GRAY[300],
-                    borderRadius: 8,
-                  }}
-                >
-                  <Minus size={getScaledSize(20)} color={GRAY[700]} />
-                </Pressable>
-                <Pressable
-                  onPress={increaseFontSize}
-                  className="items-center justify-center active:bg-gray-100"
-                  style={{
-                    width: getScaledSize(40),
-                    height: getScaledSize(40),
-                    borderWidth: 1,
-                    borderColor: GRAY[300],
-                    borderRadius: 8,
-                  }}
-                >
-                  <Plus size={getScaledSize(20)} color={GRAY[700]} />
-                </Pressable>
-              </View>
-            </View>
-
-            {/* Current Song Display */}
-            {currentSong && (
-              <View
-                className="flex-row items-center gap-4 mb-4 pb-4"
-                style={{ borderBottomWidth: 1, borderBottomColor: GRAY[200] }}
-              >
-                {albumCover && (
-                  <Image
-                    source={{ uri: albumCover }}
-                    style={{
-                      width: getScaledSize(80),
-                      height: getScaledSize(80),
-                      borderRadius: 8,
-                    }}
-                  />
-                )}
-                <View className="flex-1">
-                  <GaretText
-                    className="font-semibold"
-                    style={{ fontSize: getScaledSize(20), color: colors.foreground }}
-                  >
-                    {currentSong}
-                  </GaretText>
-                  <GaretText
-                    style={{ fontSize: getScaledSize(16), color: GRAY[500] }}
-                  >
-                    {currentArtist}
-                  </GaretText>
                 </View>
               </View>
             )}
 
-            {/* Lyrics Display */}
+            {/* Host Song Requests Dropdown */}
+            {isHost && (
+              <View
+                className="px-6 py-4"
+                style={{ backgroundColor: colors.card }}
+              >
+                <Pressable
+                  onPress={() =>
+                    setIsRequestDropdownOpen(!isRequestDropdownOpen)
+                  }
+                  className="flex-row items-center justify-between"
+                  style={{
+                    borderRadius: 8,
+                    borderWidth: 1,
+                    borderColor: GRAY[200],
+                    paddingHorizontal: getScaledSize(16),
+                    paddingVertical: getScaledSize(14),
+                  }}
+                >
+                  <GaretText
+                    className="font-semibold"
+                    style={{ fontSize: getScaledSize(16), color: GRAY[700] }}
+                  >
+                    Song Requests
+                  </GaretText>
+                  <View className="flex-row items-center gap-2">
+                    {songRequests.length > 0 && (
+                      <View
+                        className="rounded-full items-center justify-center"
+                        style={{
+                          backgroundColor: BRAND.primary,
+                          width: getScaledSize(24),
+                          height: getScaledSize(24),
+                        }}
+                      >
+                        <GaretText
+                          className="text-white font-bold"
+                          style={{ fontSize: getScaledSize(12) }}
+                        >
+                          {songRequests.length}
+                        </GaretText>
+                      </View>
+                    )}
+                    <ChevronDown
+                      size={getScaledSize(18)}
+                      color={GRAY[700]}
+                      style={{
+                        transform: [
+                          {
+                            rotate: isRequestDropdownOpen ? "180deg" : "0deg",
+                          },
+                        ],
+                      }}
+                    />
+                  </View>
+                </Pressable>
+
+                {/* Dropdown Content */}
+                {isRequestDropdownOpen && (
+                  <View
+                    className="mt-2"
+                    style={{ borderRadius: 8, backgroundColor: colors.card }}
+                  >
+                    {songRequests.length === 0 ? (
+                      <View style={{ padding: getScaledSize(16) }}>
+                        <GaretText
+                          className="text-center"
+                          style={{
+                            fontSize: getScaledSize(14),
+                            color: GRAY[500],
+                          }}
+                        >
+                          No song requests yet
+                        </GaretText>
+                      </View>
+                    ) : (
+                      <ScrollView
+                        className="max-h-80"
+                        showsVerticalScrollIndicator={false}
+                      >
+                        {songRequests.map((request, index) => (
+                          <SongRequestItem
+                            key={index}
+                            title={request.title}
+                            artist={request.artist}
+                            albumCover={request.albumCover}
+                            requestCount={request.requestCount}
+                            showDivider={index < songRequests.length - 1}
+                            scale={true}
+                            onAccept={() => acceptSongRequest(request)}
+                          />
+                        ))}
+                      </ScrollView>
+                    )}
+                  </View>
+                )}
+              </View>
+            )}
+
+            {/* Lyrics Section */}
             <View
-              className="p-4"
-              style={{
-                minHeight: 400,
-              }}
+              className="px-6 py-4 pb-6"
+              style={{ backgroundColor: colors.card }}
             >
-              {isSearching ? (
-                <View className="flex-1 items-center justify-center">
-                  <MusicLoader size="large" color={BRAND.primary} />
-                  <GaretText
-                    className="mt-4"
-                    style={{ fontSize: getScaledSize(14), color: GRAY[400] }}
-                  >
-                    Searching for songs...
-                  </GaretText>
-                </View>
-              ) : isFetchingLyrics ? (
-                <View className="flex-1 items-center justify-center">
-                  <MusicLoader size="large" color={BRAND.primary} />
-                  <GaretText
-                    className="mt-4"
-                    style={{ fontSize: getScaledSize(14), color: GRAY[400] }}
-                  >
-                    Loading lyrics...
-                  </GaretText>
-                </View>
-              ) : (
+              {/* Lyrics Header with Font Controls */}
+              <View className="flex-row items-center justify-between mb-3">
                 <GaretText
+                  className="font-semibold"
                   style={{
                     fontSize: getScaledSize(16),
-                    lineHeight: getScaledSize(16) * 1.8,
                     color: colors.foreground,
                   }}
                 >
-                  {lyrics || "Waiting for the Host to select a song..."}
+                  Lyrics:
                 </GaretText>
+                <View className="flex-row gap-3">
+                  <Pressable
+                    onPress={decreaseFontSize}
+                    className="items-center justify-center active:bg-gray-100"
+                    style={{
+                      width: getScaledSize(40),
+                      height: getScaledSize(40),
+                      borderWidth: 1,
+                      borderColor: GRAY[300],
+                      borderRadius: 8,
+                    }}
+                  >
+                    <Minus size={getScaledSize(20)} color={GRAY[700]} />
+                  </Pressable>
+                  <Pressable
+                    onPress={increaseFontSize}
+                    className="items-center justify-center active:bg-gray-100"
+                    style={{
+                      width: getScaledSize(40),
+                      height: getScaledSize(40),
+                      borderWidth: 1,
+                      borderColor: GRAY[300],
+                      borderRadius: 8,
+                    }}
+                  >
+                    <Plus size={getScaledSize(20)} color={GRAY[700]} />
+                  </Pressable>
+                </View>
+              </View>
+
+              {/* Current Song Display */}
+              {currentSong && (
+                <View
+                  className="flex-row items-center gap-4 mb-4 pb-4"
+                  style={{ borderBottomWidth: 1, borderBottomColor: GRAY[200] }}
+                >
+                  {albumCover && (
+                    <Image
+                      source={{ uri: albumCover }}
+                      style={{
+                        width: getScaledSize(80),
+                        height: getScaledSize(80),
+                        borderRadius: 8,
+                      }}
+                    />
+                  )}
+                  <View className="flex-1">
+                    <GaretText
+                      className="font-semibold"
+                      style={{
+                        fontSize: getScaledSize(20),
+                        color: colors.foreground,
+                      }}
+                    >
+                      {currentSong}
+                    </GaretText>
+                    <GaretText
+                      style={{ fontSize: getScaledSize(16), color: GRAY[500] }}
+                    >
+                      {currentArtist}
+                    </GaretText>
+                  </View>
+                </View>
               )}
+
+              {/* Lyrics Display */}
+              <View
+                className="p-4"
+                style={{
+                  minHeight: 400,
+                }}
+              >
+                {isSearching ? (
+                  <View className="flex-1 items-center justify-center">
+                    <MusicLoader size="large" color={BRAND.primary} />
+                    <GaretText
+                      className="mt-4"
+                      style={{ fontSize: getScaledSize(14), color: GRAY[400] }}
+                    >
+                      Searching for songs...
+                    </GaretText>
+                  </View>
+                ) : isFetchingLyrics ? (
+                  <View className="flex-1 items-center justify-center">
+                    <MusicLoader size="large" color={BRAND.primary} />
+                    <GaretText
+                      className="mt-4"
+                      style={{ fontSize: getScaledSize(14), color: GRAY[400] }}
+                    >
+                      Loading lyrics...
+                    </GaretText>
+                  </View>
+                ) : (
+                  <GaretText
+                    style={{
+                      fontSize: getScaledSize(16),
+                      lineHeight: getScaledSize(16) * 1.8,
+                      color: colors.foreground,
+                    }}
+                  >
+                    {lyrics || "Waiting for the Host to select a song..."}
+                  </GaretText>
+                )}
+              </View>
             </View>
           </View>
 
-        </View>
+          {/* Spacer to push buttons down when empty */}
+          {isEmptyState && <View style={{ flex: 1 }} />}
 
-        {/* Spacer to push buttons down when empty */}
-        {isEmptyState && <View style={{ flex: 1 }} />}
-
-        {/* Share Button */}
-        <Pressable
-          onPress={handleInvite}
-          disabled={!isHost}
-          className="mx-6 mt-6 px-4 py-4 rounded-lg flex-row items-center justify-center gap-2 shadow-lg active:opacity-80"
-          style={{ backgroundColor: BRAND.primaryLight }}
-        >
-          <Share2 size={getScaledSize(18)} color="white" />
-          <GaretText
-            className="text-white font-semibold"
-            style={{ fontSize: getScaledSize(16) }}
-          >
-            {isHost ? "Share" : "Ask host to share"}
-          </GaretText>
-        </Pressable>
-
-        {/* Leave Group Button */}
-        <Pressable
-          onPress={handleLeaveGroup}
-          className="mx-6 my-6 px-4 py-4 rounded-lg items-center active:bg-gray-100"
-          style={{ borderWidth: 1, borderColor: BRAND.primaryLight }}
-        >
-          <GaretText
-            className="font-semibold"
-            style={{ fontSize: getScaledSize(16), color: BRAND.accent }}
-          >
-            Leave Group
-          </GaretText>
-        </Pressable>
-
-        {/* Bottom spacing */}
-        <View style={{ height: 40 }} />
-      </ScrollView>
-
-      {/* Share Modal */}
-      <ShareModal
-        isVisible={isShareModalVisible}
-        onClose={() => setIsShareModalVisible(false)}
-        groupId={groupId}
-      />
-
-      {/* Paywall Modal */}
-      <PaywallModal
-        visible={isPaywallVisible}
-        onClose={() => setIsPaywallVisible(false)}
-        currentMemberCount={memberCount}
-        userRole={isHost ? "host" : "singer"}
-      />
-
-      {/* Member Limit Modal */}
-      <Modal
-        visible={showLimitModal}
-        transparent
-        animationType="fade"
-        onRequestClose={() => setShowLimitModal(false)}
-      >
-        <View className="flex-1 bg-black/50 items-center justify-center p-4">
+          {/* Share Button */}
           <Pressable
-            className="w-full max-w-lg rounded-2xl p-6"
-            style={{ backgroundColor: colors.card }}
-            onPress={(e) => e.stopPropagation()}
+            onPress={handleInvite}
+            disabled={!isHost}
+            className="mx-6 mt-6 px-4 py-4 rounded-lg flex-row items-center justify-center gap-2 shadow-lg active:opacity-80"
+            style={{ backgroundColor: BRAND.primaryLight }}
           >
-            <RocaText
-              className="text-xl font-semibold mb-4"
-              style={{ color: colors.foreground }}
-            >
-              {limitModalType === "host" ? "Member Limit Reached" : "Room Full"}
-            </RocaText>
+            <Share2 size={getScaledSize(18)} color="white" />
             <GaretText
-              className="text-base mb-6"
-              style={{ color: colors.mutedForeground }}
+              className="text-white font-semibold"
+              style={{ fontSize: getScaledSize(16) }}
             >
-              {limitModalType === "host"
-                ? `Your ${tier} plan supports up to ${memberLimit} members. Upgrade to allow more.`
-                : "This room has reached its member limit. Ask the host to upgrade."}
+              {isHost ? "Share" : "Ask host to share"}
             </GaretText>
-            {limitModalType === "host" ? (
-              <View className="flex-row gap-2">
-                <Pressable
-                  onPress={() => {
-                    setShowLimitModal(false);
-                    navigation.navigate("Pricing" as never);
-                  }}
-                  className="flex-1 bg-violet-400 py-3 rounded-lg items-center active:bg-violet-500"
-                >
-                  <GaretText className="text-white font-semibold">
-                    Upgrade
-                  </GaretText>
-                </Pressable>
+          </Pressable>
+
+          {/* Leave Group Button */}
+          <Pressable
+            onPress={handleLeaveGroup}
+            className="mx-6 my-6 px-4 py-4 rounded-lg items-center active:bg-gray-100"
+            style={{ borderWidth: 1, borderColor: BRAND.primaryLight }}
+          >
+            <GaretText
+              className="font-semibold"
+              style={{ fontSize: getScaledSize(16), color: BRAND.accent }}
+            >
+              Leave Group
+            </GaretText>
+          </Pressable>
+
+          {/* Bottom spacing */}
+          <View style={{ height: 40 }} />
+        </ScrollView>
+
+        {/* Share Modal */}
+        <ShareModal
+          isVisible={isShareModalVisible}
+          onClose={() => setIsShareModalVisible(false)}
+          groupId={groupId}
+        />
+
+        {/* Paywall Modal */}
+        <PaywallModal
+          visible={isPaywallVisible}
+          onClose={() => setIsPaywallVisible(false)}
+          currentMemberCount={memberCount}
+          userRole={isHost ? "host" : "singer"}
+        />
+
+        {/* Member Limit Modal */}
+        <Modal
+          visible={showLimitModal}
+          transparent
+          animationType="fade"
+          onRequestClose={() => setShowLimitModal(false)}
+        >
+          <View className="flex-1 bg-black/50 items-center justify-center p-4">
+            <Pressable
+              className="w-full max-w-lg rounded-2xl p-6"
+              style={{ backgroundColor: colors.card }}
+              onPress={(e) => e.stopPropagation()}
+            >
+              <RocaText
+                className="text-xl font-semibold mb-4"
+                style={{ color: colors.foreground }}
+              >
+                {limitModalType === "host"
+                  ? "Member Limit Reached"
+                  : "Room Full"}
+              </RocaText>
+              <GaretText
+                className="text-base mb-6"
+                style={{ color: colors.mutedForeground }}
+              >
+                {limitModalType === "host"
+                  ? `Your ${tier} plan supports up to ${memberLimit} members. Upgrade to allow more.`
+                  : "This room has reached its member limit. Ask the host to upgrade."}
+              </GaretText>
+              {limitModalType === "host" ? (
+                <View className="flex-row gap-2">
+                  <Pressable
+                    onPress={() => {
+                      setShowLimitModal(false);
+                      navigation.navigate("Pricing" as never);
+                    }}
+                    className="flex-1 bg-violet-400 py-3 rounded-lg items-center active:bg-violet-500"
+                  >
+                    <GaretText className="text-white font-semibold">
+                      Upgrade
+                    </GaretText>
+                  </Pressable>
+                  <Pressable
+                    onPress={() => setShowLimitModal(false)}
+                    className="flex-1 py-3 rounded-lg items-center"
+                    style={{ borderWidth: 1, borderColor: colors.border }}
+                  >
+                    <GaretText style={{ color: colors.foreground }}>
+                      Dismiss
+                    </GaretText>
+                  </Pressable>
+                </View>
+              ) : (
                 <Pressable
                   onPress={() => setShowLimitModal(false)}
-                  className="flex-1 py-3 rounded-lg items-center"
-                  style={{ borderWidth: 1, borderColor: colors.border }}
+                  className="bg-violet-400 py-3 rounded-lg items-center active:bg-violet-500"
                 >
-                  <GaretText style={{ color: colors.foreground }}>
-                    Dismiss
-                  </GaretText>
+                  <GaretText className="text-white font-semibold">OK</GaretText>
                 </Pressable>
-              </View>
-            ) : (
-              <Pressable
-                onPress={() => setShowLimitModal(false)}
-                className="bg-violet-400 py-3 rounded-lg items-center active:bg-violet-500"
-              >
-                <GaretText className="text-white font-semibold">OK</GaretText>
-              </Pressable>
-            )}
-          </Pressable>
-        </View>
-      </Modal>
+              )}
+            </Pressable>
+          </View>
+        </Modal>
       </View>
     </SafeAreaView>
   );

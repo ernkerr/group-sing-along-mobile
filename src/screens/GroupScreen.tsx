@@ -779,6 +779,7 @@ export default function GroupScreen() {
                         borderRadius: 8,
                         height: 48,
                         fontSize: 16,
+                        letterSpacing: 0,
                       }}
                     />
                   </View>
@@ -885,6 +886,7 @@ export default function GroupScreen() {
                         borderRadius: 8,
                         height: 48,
                         fontSize: 16,
+                        letterSpacing: 0,
                       }}
                     />
                   </View>
@@ -1140,7 +1142,7 @@ export default function GroupScreen() {
               <View
                 className="p-4"
                 style={{
-                  minHeight: 400,
+                  minHeight: 350,
                 }}
               >
                 {isSearching ? (
@@ -1178,9 +1180,6 @@ export default function GroupScreen() {
             </View>
           </View>
 
-          {/* Spacer to push buttons down when empty */}
-          {isEmptyState && <View style={{ flex: 1 }} />}
-
           {/* Share Button */}
           <Pressable
             onPress={handleInvite}
@@ -1200,7 +1199,7 @@ export default function GroupScreen() {
           {/* Leave Group Button */}
           <Pressable
             onPress={handleLeaveGroup}
-            className="mx-6 my-6 px-4 py-4 rounded-lg items-center active:bg-gray-100"
+            className="mx-6 mt-3 mb-6 px-4 py-4 rounded-lg items-center active:bg-gray-100"
             style={{ borderWidth: 1, borderColor: BRAND.primaryLight }}
           >
             <GaretText

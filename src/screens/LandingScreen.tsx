@@ -1,12 +1,20 @@
 import React, { useState } from "react";
-import { View, ScrollView, Modal, Pressable, Alert, KeyboardAvoidingView, Platform } from "react-native";
+import {
+  View,
+  ScrollView,
+  Modal,
+  Pressable,
+  Alert,
+  KeyboardAvoidingView,
+  Platform,
+  TextInput,
+} from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 import { useNavigation } from "@react-navigation/native";
 import type { NativeStackNavigationProp } from "@react-navigation/native-stack";
 import { Mic, Users, X } from "lucide-react-native";
 import { InterText, GaretText, RocaText } from "@/components/ui/Typography";
 import { Button } from "@/components/ui/Button";
-import { Input } from "@/components/ui/Input";
 import { generateGroupCode } from "@/utils/generateCode";
 import { storage } from "@/services/storage";
 import type { RootStackParamList } from "@/types";
@@ -190,7 +198,7 @@ export default function LandingScreen() {
                         onPress={() => setShowJoinInput(false)}
                         className="p-2 -mr-2"
                       >
-                        <X size={24} color={colors.muted} />
+                        <X size={24} color={colors.mutedForeground} />
                       </Pressable>
                     </View>
 
@@ -214,18 +222,25 @@ export default function LandingScreen() {
                       >
                         Group Code
                       </GaretText>
-                      <Input
+                      <TextInput
                         placeholder="ABCD"
+                        placeholderTextColor={colors.mutedForeground}
                         value={joinCode}
                         onChangeText={setJoinCode}
                         autoCapitalize="characters"
                         maxLength={4}
-                        textAlign="center"
-                        textAlignVertical="center"
                         style={{
+                          backgroundColor: colors.input,
+                          borderColor: colors.border,
+                          borderWidth: 1,
+                          borderRadius: 6,
+                          height: 64,
                           fontSize: 28,
                           letterSpacing: 2,
-                          height: 56,
+                          textAlign: "center",
+                          fontFamily: "Garet",
+                          color: colors.foreground,
+                          paddingHorizontal: 12,
                         }}
                       />
                     </View>
@@ -256,7 +271,10 @@ export default function LandingScreen() {
                       >
                         <GaretText
                           className="font-semibold"
-                          style={{ fontSize: 16, color: colors.mutedForeground }}
+                          style={{
+                            fontSize: 16,
+                            color: colors.mutedForeground,
+                          }}
                         >
                           Cancel
                         </GaretText>

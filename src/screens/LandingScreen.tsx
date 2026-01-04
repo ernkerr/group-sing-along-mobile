@@ -229,6 +229,7 @@ export default function LandingScreen() {
                         onChangeText={setJoinCode}
                         autoCapitalize="characters"
                         maxLength={4}
+                        allowFontScaling={false}
                         style={{
                           backgroundColor: colors.input,
                           borderColor: colors.border,

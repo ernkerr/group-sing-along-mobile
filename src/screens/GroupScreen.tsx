@@ -9,6 +9,7 @@ import {
   AppStateStatus,
   Platform,
   Modal,
+  TextInput,
 } from "react-native";
 import {
   SafeAreaView,
@@ -26,7 +27,6 @@ import {
   Users,
 } from "lucide-react-native";
 import { RocaText, GaretText } from "@/components/ui/Typography";
-import { Input } from "@/components/ui/Input";
 import { ShareModal } from "@/components/ShareModal";
 import { PaywallModal } from "@/components/PaywallModal";
 import { SessionTimer } from "@/components/SessionTimer";
@@ -764,21 +764,25 @@ export default function GroupScreen() {
                   style={{ alignItems: "stretch" }}
                 >
                   <View className="flex-1">
-                    <Input
+                    <TextInput
                       placeholder="Search for a song"
+                      placeholderTextColor={colors.mutedForeground}
                       value={singerSearchTerm}
                       onChangeText={setSingerSearchTerm}
                       editable={!isSingerSearching}
                       returnKeyType="search"
                       onSubmitEditing={searchSongAsSinger}
-                      scale={true}
+                      allowFontScaling={false}
                       style={{
                         backgroundColor: colors.card,
                         borderColor: colors.border,
                         borderWidth: 1,
                         borderRadius: 8,
-                        height: 48,
-                        fontSize: 16,
+                        height: getScaledSize(48),
+                        fontSize: getScaledSize(16),
+                        fontFamily: "Garet",
+                        color: colors.foreground,
+                        paddingHorizontal: 12,
                         letterSpacing: 0,
                       }}
                     />
@@ -871,21 +875,25 @@ export default function GroupScreen() {
                   style={{ alignItems: "stretch" }}
                 >
                   <View className="flex-1">
-                    <Input
+                    <TextInput
                       placeholder="Search for a song"
+                      placeholderTextColor={colors.mutedForeground}
                       value={searchTerm}
                       onChangeText={setSearchTerm}
                       editable={!isSearching}
                       returnKeyType="search"
                       onSubmitEditing={handleSearch}
-                      scale={true}
+                      allowFontScaling={false}
                       style={{
                         backgroundColor: colors.card,
                         borderColor: colors.border,
                         borderWidth: 1,
                         borderRadius: 8,
-                        height: 48,
-                        fontSize: 16,
+                        height: getScaledSize(48),
+                        fontSize: getScaledSize(16),
+                        fontFamily: "Garet",
+                        color: colors.foreground,
+                        paddingHorizontal: 12,
                         letterSpacing: 0,
                       }}
                     />

@@ -21,6 +21,7 @@ export default function PricingScreen() {
 
   const handlePeriodToggle = (tier: SubscriptionTier, period: SubscriptionPeriod) => {
     setSelectedPeriods(prev => ({ ...prev, [tier]: period }))
+    setSelectedTier(tier)
   }
 
   const handleSuccess = () => {
@@ -263,7 +264,9 @@ export default function PricingScreen() {
                 <View>
                   {tier.tier === SubscriptionTier.FREE ? (
                     <Button variant="gradient" size="lg" onPress={() => navigation.goBack()}>
-                      Start singing
+                      <GaretText className="text-white font-semibold">
+                        Start singing
+                      </GaretText>
                     </Button>
                   ) : selectedPeriod ? (
                     <BuyButton

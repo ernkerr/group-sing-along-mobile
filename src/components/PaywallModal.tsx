@@ -25,6 +25,7 @@ export function PaywallModal({ visible, onClose, currentMemberCount, userRole }:
 
   const handlePeriodToggle = (tier: SubscriptionTier, period: SubscriptionPeriod) => {
     setSelectedPeriods(prev => ({ ...prev, [tier]: period }))
+    setSelectedTier(tier)
   }
 
   const paidTiers = PRICING_TIERS.filter(t => t.tier !== SubscriptionTier.FREE)

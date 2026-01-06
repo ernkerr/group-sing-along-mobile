@@ -70,7 +70,7 @@ export default function PricingScreen() {
         {PRICING_TIERS.map((tier) => {
           const isSelected = selectedTier === tier.tier
           const selectedPeriod = tier.tier !== SubscriptionTier.FREE
-            ? (selectedPeriods[tier.tier] || SubscriptionPeriod.MONTHLY)
+            ? (selectedPeriods[tier.tier] || SubscriptionPeriod.YEARLY)
             : null
           const price = selectedPeriod === SubscriptionPeriod.YEARLY ? tier.yearlyPrice : tier.monthlyPrice
 

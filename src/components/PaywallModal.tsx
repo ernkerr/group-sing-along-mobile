@@ -94,7 +94,7 @@ export function PaywallModal({ visible, onClose, currentMemberCount, userRole }:
                 <>
                   {paidTiers.map((tier) => {
                     const isSelected = selectedTier === tier.tier
-                    const selectedPeriod = selectedPeriods[tier.tier] || SubscriptionPeriod.MONTHLY
+                    const selectedPeriod = selectedPeriods[tier.tier] || SubscriptionPeriod.YEARLY
                     const price = selectedPeriod === SubscriptionPeriod.YEARLY ? tier.yearlyPrice : tier.monthlyPrice
 
                     return (

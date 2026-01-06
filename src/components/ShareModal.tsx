@@ -72,9 +72,9 @@ export function ShareModal({ isVisible, onClose, groupId }: ShareModalProps) {
 
               {/* Group Code */}
               <View className="items-center justify-center mb-6">
-                <GaretText className="text-sm" style={{ color: '#6b7280' }}>
+                <GaretText className="text-xl" style={{ color: '#6b7280' }}>
                   Group Code:{' '}
-                  <GaretText className="text-violet-500 font-semibold">
+                  <GaretText className="text-2xl text-violet-500 font-semibold">
                     {groupId}
                   </GaretText>
                 </GaretText>
@@ -95,7 +95,7 @@ export function ShareModal({ isVisible, onClose, groupId }: ShareModalProps) {
                       resizeMode="contain"
                     />
                   </Pressable>
-                  <GaretText className="text-sm font-medium" style={{ color: '#6b7280' }}>
+                  <GaretText className="text-lg font-medium" style={{ color: '#6b7280' }}>
                     Message
                   </GaretText>
                 </View>
@@ -110,7 +110,7 @@ export function ShareModal({ isVisible, onClose, groupId }: ShareModalProps) {
                       backgroundColor="white"
                     />
                   </View>
-                  <GaretText className="text-sm font-medium" style={{ color: '#6b7280' }}>
+                  <GaretText className="text-lg font-medium" style={{ color: '#6b7280' }}>
                     Scan QR Code
                   </GaretText>
                 </View>

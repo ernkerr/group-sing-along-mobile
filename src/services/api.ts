@@ -199,6 +199,29 @@ export const api = {
 
     throw new Error("Lyrics not found - no service could find this song");
   },
+
+  /**
+   * Generate a Musixmatch URL for viewing lyrics
+   * @param artist - Artist name
+   * @param title - Song title
+   * @returns Musixmatch lyrics page URL
+   */
+  generateMusixmatchUrl: (artist: string, title: string): string => {
+    const slugify = (text: string): string => {
+      return text
+        .toLowerCase()
+        .trim()
+        .replace(/[^\w\s-]/g, '')
+        .replace(/\s+/g, '-')
+        .replace(/-+/g, '-')
+        .replace(/^-|-$/g, '');
+    };
+
+    const artistSlug = slugify(artist);
+    const titleSlug = slugify(title);
+
+    return `https://www.musixmatch.com/lyrics/${artistSlug}/${titleSlug}`;
+  },
 };
 
 // Export types for use in components

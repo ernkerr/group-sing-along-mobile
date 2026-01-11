@@ -38,6 +38,7 @@ import { usePusher } from "@/hooks/usePusher";
 import { useSubscription } from "@/hooks/useSubscription";
 import { useResponsive } from "@/hooks/useResponsive";
 import { api } from "@/services/api";
+import { openReaderView } from "../../modules/expo-safari-reader";
 import type { RootStackParamList } from "@/types";
 import { useTheme } from "@/context/ThemeContext";
 import { SubscriptionTier } from "@/types/subscription";
@@ -540,26 +541,26 @@ export default function GroupScreen() {
     } as SearchResult);
   };
 
-  // Select a song and fetch/broadcast lyrics
+  // Select a song and broadcast lyrics URL
   const handleSelectSong = async (song: SearchResult) => {
     setIsFetchingLyrics(true);
     setSearchResults([]); // Clear search results immediately
 
     try {
-      // Fetch lyrics
-      const fetchedLyrics = await api.fetchLyrics(song.artist, song.title);
+      // Generate Musixmatch URL instead of fetching lyrics text
+      const lyricsUrl = api.generateMusixmatchUrl(song.artist, song.title);
 
       // Update local state
-      setLyrics(fetchedLyrics);
+      setLyrics(lyricsUrl);
       setCurrentSong(song.title);
       setCurrentArtist(song.artist);
       setAlbumCover(song.album.cover_medium);
 
-      // Broadcast to all users via Pusher (including host's limit for paywall)
+      // Broadcast URL to all users via Pusher (using existing 'lyrics' field)
       await api.triggerPusherEvent(`group-lyrics-${groupId}`, "lyric-update", {
         title: song.title,
         artist: song.artist,
-        lyrics: fetchedLyrics,
+        lyrics: lyricsUrl,
         albumCover: song.album.cover_medium,
         hostLimit: memberLimit,
       });
@@ -568,11 +569,32 @@ export default function GroupScreen() {
     } catch (error) {
       console.error("Error selecting song:", error);
       Alert.alert(
-        "No Lyrics Found",
-        "No lyrics found for this song. Please try another song or reach out to the developer."
+        "Unable to Load Lyrics",
+        "Could not generate lyrics link for this song. Please try another song."
       );
     } finally {
       setIsFetchingLyrics(false);
+    }
+  };
+
+  // Open lyrics in Safari Reader View
+  const openLyrics = async () => {
+    if (!lyrics) {
+      Alert.alert(
+        "No Lyrics Available",
+        "Please wait for the host to select a song."
+      );
+      return;
+    }
+
+    try {
+      await openReaderView(lyrics);
+    } catch (error) {
+      console.error("Error opening Safari View:", error);
+      Alert.alert(
+        "Unable to Open Lyrics",
+        "Could not open the lyrics viewer. Please try again."
+      );
     }
   };
 
@@ -1150,7 +1172,9 @@ export default function GroupScreen() {
               <View
                 className="p-4"
                 style={{
-                  minHeight: 350,
+                  minHeight: 200,
+                  justifyContent: "center",
+                  alignItems: "center",
                 }}
               >
                 {isSearching ? (
@@ -1170,18 +1194,54 @@ export default function GroupScreen() {
                       className="mt-4"
                       style={{ fontSize: getScaledSize(14), color: GRAY[400] }}
                     >
-                      Loading lyrics...
+                      Preparing lyrics...
+                    </GaretText>
+                  </View>
+                ) : lyrics ? (
+                  <View className="w-full items-center gap-4">
+                    <Pressable
+                      onPress={openLyrics}
+                      className="w-full py-4 rounded-lg items-center justify-center gap-2"
+                      style={{
+                        backgroundColor: BRAND.primaryLight,
+                        ...Platform.select({
+                          ios: {
+                            shadowColor: "#000",
+                            shadowOffset: { width: 0, height: 2 },
+                            shadowOpacity: 0.1,
+                            shadowRadius: 4,
+                          },
+                          android: {
+                            elevation: 3,
+                          },
+                        }),
+                      }}
+                    >
+                      <Mic size={getScaledSize(24)} color="white" />
+                      <GaretText
+                        className="text-white font-semibold"
+                        style={{ fontSize: getScaledSize(16) }}
+                      >
+                        View Lyrics on Musixmatch
+                      </GaretText>
+                    </Pressable>
+                    <GaretText
+                      className="text-center"
+                      style={{ fontSize: getScaledSize(12), color: GRAY[400] }}
+                    >
+                      Lyrics provided by Musixmatch
                     </GaretText>
                   </View>
                 ) : (
                   <GaretText
+                    className="text-center"
                     style={{
                       fontSize: getScaledSize(16),
                       lineHeight: getScaledSize(16) * 1.8,
-                      color: colors.foreground,
+                      color: GRAY[400],
                     }}
                   >
-                    {lyrics || "Waiting for the Host to select a song..."}
+                    Waiting for the Host to select a song...
                   </GaretText>
                 )}
               </View>

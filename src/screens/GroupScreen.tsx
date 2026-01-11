@@ -547,8 +547,8 @@ export default function GroupScreen() {
     setSearchResults([]); // Clear search results immediately
 
     try {
-      // Generate Musixmatch URL instead of fetching lyrics text
-      const lyricsUrl = api.generateMusixmatchUrl(song.artist, song.title);
+      // Generate Genius URL instead of fetching lyrics text
+      const lyricsUrl = api.generateGeniusUrl(song.artist, song.title);
 
       // Update local state
       setLyrics(lyricsUrl);
@@ -1222,14 +1222,14 @@ export default function GroupScreen() {
                         className="text-white font-semibold"
                         style={{ fontSize: getScaledSize(16) }}
                       >
-                        View Lyrics on Musixmatch
+                        View Lyrics on Genius
                       </GaretText>
                     </Pressable>
                     <GaretText
                       className="text-center"
                       style={{ fontSize: getScaledSize(12), color: GRAY[400] }}
                     >
-                      Lyrics provided by Musixmatch
+                      Lyrics provided by Genius
                     </GaretText>
                   </View>
                 ) : (

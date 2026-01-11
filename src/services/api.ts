@@ -201,12 +201,12 @@ export const api = {
   },
 
   /**
-   * Generate a Musixmatch URL for viewing lyrics
+   * Generate a Genius URL for viewing lyrics
    * @param artist - Artist name
    * @param title - Song title
-   * @returns Musixmatch lyrics page URL
+   * @returns Genius lyrics page URL
    */
-  generateMusixmatchUrl: (artist: string, title: string): string => {
+  generateGeniusUrl: (artist: string, title: string): string => {
     const slugify = (text: string): string => {
       return text
         .toLowerCase()
@@ -220,7 +220,7 @@ export const api = {
     const artistSlug = slugify(artist);
     const titleSlug = slugify(title);
 
-    return `https://www.musixmatch.com/lyrics/${artistSlug}/${titleSlug}`;
+    return `https://genius.com/${artistSlug}-${titleSlug}-lyrics`;
   },
 };
 
